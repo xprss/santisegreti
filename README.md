@@ -9,6 +9,7 @@ Il Secret Santa per amici, famiglie e colleghi: stanze segrete su invito, estraz
 ## Come funziona
 
 - Si entra con Google. Ognuno ha un profilo con nome, una breve bio e un colore (all'inizio casuale), che diventa il colore del suo omino di pan di zenzero.
+- L'omino può portare un accessorio, uno solo oppure nessuno (all'inizio nessuno): cappelli, corna da renna, parrucche, occhiali, cravatta, sciarpa, zainetto e altri. Il catalogo sta in `frontend/src/accessories/catalog.ts` e i disegni servono sia per l'SVG sia per la scena 3D. Un test del backend controlla che gli id coincidano con `app/models/accessories.py`.
 - Chi apre una stanza ne è l'admin e partecipa anche all'estrazione. Decide budget, tema (facoltativo) e data dello scambio, e può cambiarli in seguito.
 - Si entra in una stanza solo con un codice di invito: l'admin lo genera, lo vede a schermo e lo gira come preferisce (link, chat, a voce). Ogni codice vale per una persona e scade dopo 3 minuti.
 - L'admin può creare **gruppi di esclusione**: chi sta nello stesso gruppo non si pesca a vicenda (coppie, famiglie…).

@@ -62,7 +62,12 @@ function ParticipantsCard({ room }: { room: RoomDetail }) {
       <ListGroup variant="flush">
         {room.participants.map((person) => (
           <ListGroup.Item key={person.id} className="d-flex align-items-center gap-3 py-2">
-            <Gingerbread color={person.color} size={30} className="flex-shrink-0" />
+            <Gingerbread
+              color={person.color}
+              accessory={person.accessory}
+              size={30}
+              className="flex-shrink-0"
+            />
             <span className="flex-grow-1">
               {person.name}
               {person.id === room.admin_id && (

@@ -3,7 +3,9 @@ import { Alert, Card, Container, Form, Spinner } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, useNavigate } from 'react-router'
 import { useLogout, useMe, useUpdateMe } from '../api/hooks'
+import { accessoryLabel, type AccessoryId } from '../accessories/catalog'
 import type { Me } from '../api/types'
+import { AccessoryPicker } from '../components/AccessoryPicker'
 import { ErrorAlert } from '../components/feedback'
 import { Gingerbread } from '../components/Gingerbread'
 import { PALETTE } from '../lib/format'
@@ -18,12 +20,16 @@ export function Profile() {
   const [name, setName] = useState(me.name)
   const [bio, setBio] = useState(me.bio)
   const [color, setColor] = useState(me.color.toUpperCase())
+  const [accessory, setAccessory] = useState<AccessoryId | null>(me.accessory)
   const [saved, setSaved] = useState(false)
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     setSaved(false)
-    update.mutate({ name: name.trim(), bio: bio.trim(), color }, { onSuccess: () => setSaved(true) })
+    update.mutate(
+      { name: name.trim(), bio: bio.trim(), color, accessory },
+      { onSuccess: () => setSaved(true) },
+    )
   }
 
   return (
@@ -39,8 +45,13 @@ export function Profile() {
 
       <Card>
         <Card.Body>
-          <div className="text-center mb-3">
-            <Gingerbread color={color} size={88} title={`Il tuo omino, color ${color}`} />
+          <div className="text-center pt-4 mb-3">
+            <Gingerbread
+              color={color}
+              accessory={accessory}
+              size={88}
+              title={`Il tuo omino: ${accessoryLabel(accessory).toLowerCase()}`}
+            />
           </div>
           <Form onSubmit={submit}>
             <Form.Group className="mb-3" controlId="profile-name">
@@ -94,6 +105,14 @@ export function Profile() {
                   oppure un colore qualsiasi
                 </Form.Label>
               </Form.Group>
+            </fieldset>
+
+            <fieldset className="mb-4">
+              <legend className="fs-6 fw-semibold mb-1">Un accessorio, se ti va</legend>
+              <p className="small text-body-secondary mb-2">
+                Uno solo: sceglierne un altro sostituisce quello di prima.
+              </p>
+              <AccessoryPicker value={accessory} color={color} onChange={setAccessory} />
             </fieldset>
 
             <ErrorAlert error={update.error} />

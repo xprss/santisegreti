@@ -109,7 +109,12 @@ export default function ChristmasScene({ participants, meId }: Props) {
 
       {shown ? (
         <div className="ss-scene-card" aria-live="polite">
-          <Gingerbread color={shown.color} size={40} className="flex-shrink-0" />
+          <Gingerbread
+            color={shown.color}
+            accessory={shown.accessory}
+            size={40}
+            className="flex-shrink-0"
+          />
           <div className="flex-grow-1 min-w-0">
             <div className="fw-bold">{shown.id === meId ? `${shown.name} (tu)` : shown.name}</div>
             <div className="text-body-secondary">{shown.bio || 'Nessuna bio, per ora.'}</div>

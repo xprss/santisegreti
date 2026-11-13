@@ -24,7 +24,7 @@ export function Layout() {
               aria-label="Il tuo profilo"
             >
               <span className="d-none d-sm-inline small fw-semibold">{me.data.name}</span>
-              <Gingerbread color={me.data.color} size={28} />
+              <Gingerbread color={me.data.color} accessory={me.data.accessory} size={28} />
             </Link>
           )}
         </Container>

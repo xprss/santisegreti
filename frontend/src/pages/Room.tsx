@@ -118,7 +118,12 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
         <ErrorAlert error={assignment.error} />
         {revealed && receiver && (
           <div className="d-flex gap-3 align-items-start">
-            <Gingerbread color={receiver.color} size={56} className="flex-shrink-0" />
+            <Gingerbread
+              color={receiver.color}
+              accessory={receiver.accessory}
+              size={56}
+              className="flex-shrink-0 mt-2"
+            />
             <div className="flex-grow-1">
               <p className="h4 mb-1">{receiver.name}</p>
               <p className="mb-3 text-body-secondary">
@@ -180,7 +185,12 @@ function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
       <ListGroup variant="flush">
         {room.participants.map((person) => (
           <ListGroup.Item key={person.id} className="d-flex gap-3 align-items-start py-3">
-            <Gingerbread color={person.color} size={36} className="flex-shrink-0" />
+            <Gingerbread
+              color={person.color}
+              accessory={person.accessory}
+              size={36}
+              className="flex-shrink-0"
+            />
             <div className="flex-grow-1 min-w-0">
               <div className="d-flex flex-wrap align-items-center gap-2">
                 <span className="fw-semibold">{person.name}</span>

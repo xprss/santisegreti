@@ -1,3 +1,5 @@
+import type { AccessoryId } from '../accessories/catalog'
+
 export type RoomStatus = 'open' | 'drawn'
 
 export interface AppConfig {
@@ -10,6 +12,7 @@ export interface UserPublic {
   name: string
   bio: string
   color: string
+  accessory: AccessoryId | null
   avatar_url: string | null
 }
 

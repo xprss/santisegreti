@@ -72,7 +72,7 @@ export function useLogout() {
 export function useUpdateMe() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (input: Partial<Pick<Me, 'name' | 'bio' | 'color'>>) =>
+    mutationFn: (input: Partial<Pick<Me, 'name' | 'bio' | 'color' | 'accessory'>>) =>
       api<Me>('/me', { method: 'PATCH', body: input }),
     onSuccess: (me) => {
       client.setQueryData(keys.me, me)

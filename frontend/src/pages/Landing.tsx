@@ -3,12 +3,19 @@ import { useState, type FormEvent } from 'react'
 import { Alert, Card, Container, Form } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { useSearchParams } from 'react-router'
+import type { AccessoryId } from '../accessories/catalog'
 import { useConfig, useLogin } from '../api/hooks'
 import { ErrorAlert, Loading } from '../components/feedback'
 import { Gingerbread } from '../components/Gingerbread'
 import { Logo } from '../components/Logo'
 
-const DEMO_COLORS = ['#C0392B', '#1E8449', '#D4A017', '#2E86C1', '#C2185B']
+const DEMO: { color: string; accessory: AccessoryId }[] = [
+  { color: '#C0392B', accessory: 'santa_hat' },
+  { color: '#1E8449', accessory: 'sunglasses' },
+  { color: '#D4A017', accessory: 'scarf' },
+  { color: '#2E86C1', accessory: 'reindeer_antlers' },
+  { color: '#C2185B', accessory: 'bow_tie' },
+]
 
 export function Landing() {
   const config = useConfig()
@@ -27,9 +34,9 @@ export function Landing() {
         pensa l'estrazione, e ognuno scopre solo a chi fare il regalo.
       </p>
 
-      <div className="d-flex justify-content-center gap-1 mb-4" aria-hidden>
-        {DEMO_COLORS.map((color) => (
-          <Gingerbread key={color} color={color} size={40} />
+      <div className="d-flex justify-content-center gap-2 mt-4 mb-4" aria-hidden>
+        {DEMO.map(({ color, accessory }) => (
+          <Gingerbread key={color} color={color} accessory={accessory} size={40} />
         ))}
       </div>
 

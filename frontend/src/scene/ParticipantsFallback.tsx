@@ -15,7 +15,12 @@ export function ParticipantsFallback({ participants, meId }: Props) {
       <div className="d-flex flex-wrap justify-content-center gap-2">
         {participants.map((person) => (
           <div key={person.id} className="text-center" style={{ width: '4.5rem' }}>
-            <Gingerbread color={person.color} size={40} title={person.name} />
+            <Gingerbread
+              color={person.color}
+              accessory={person.accessory}
+              size={40}
+              title={person.name}
+            />
             <div className="small text-truncate">
               {person.id === meId ? 'Tu' : person.name}
             </div>
