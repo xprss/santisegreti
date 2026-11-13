@@ -129,6 +129,38 @@ body {
   padding-bottom: 0.75rem;
 }
 
+// Menu con il bastoncino di zucchero al posto dell'hamburger.
+.ss-menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+
+  &::after {
+    display: none;
+  }
+
+  &:hover,
+  &:focus-visible,
+  &.show {
+    background: rgba(255, 255, 255, 0.15);
+    transform: rotate(-12deg);
+  }
+}
+
+.ss-menu {
+  --bs-dropdown-link-active-bg: #{$ss-green};
+  min-width: 11rem;
+  border: 2px solid rgba($ss-gold, 0.6);
+  border-radius: $border-radius;
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
+  font-weight: 700;
+}
+
 // Il boa sotto la barra: metà sopra il rosso, metà sopra la pagina; il fiocco scende un po'.
 .ss-garland {
   position: relative;

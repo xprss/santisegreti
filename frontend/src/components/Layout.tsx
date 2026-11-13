@@ -1,13 +1,15 @@
-import { Container, Navbar } from 'react-bootstrap'
-import { Link, Outlet, ScrollRestoration } from 'react-router'
-import { useMe } from '../api/hooks'
+import { Container, Dropdown, Navbar } from 'react-bootstrap'
+import { Link, Outlet, ScrollRestoration, useNavigate } from 'react-router'
+import { useLogout, useMe } from '../api/hooks'
 import { Landing } from '../pages/Landing'
 import { ErrorAlert, Loading } from './feedback'
-import { Gingerbread } from './Gingerbread'
+import { CandyCane } from './CandyCane'
 import { Garland } from './Garland'
 
 export function Layout() {
   const me = useMe()
+  const logout = useLogout()
+  const navigate = useNavigate()
 
   return (
     <>
@@ -18,14 +20,22 @@ export function Layout() {
               santisegreti
             </Navbar.Brand>
             {me.data && (
-              <Link
-                to="/profilo"
-                className="d-flex align-items-center gap-2 text-decoration-none text-cream"
-                aria-label="Il tuo profilo"
-              >
-                <span className="d-none d-sm-inline small fw-semibold">{me.data.name}</span>
-                <Gingerbread color={me.data.color} accessory={me.data.accessory} size={28} />
-              </Link>
+              <Dropdown align="end">
+                <Dropdown.Toggle variant="link" className="ss-menu-toggle" aria-label="Menu">
+                  <CandyCane />
+                </Dropdown.Toggle>
+                <Dropdown.Menu className="ss-menu">
+                  <Dropdown.Item as={Link} to="/profilo">
+                    Il tuo profilo
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    as="button"
+                    onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/') })}
+                  >
+                    Esci
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             )}
           </Container>
         </Navbar>
