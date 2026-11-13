@@ -13,7 +13,9 @@ async def get_me(user: CurrentUser) -> Me:
 
 @router.patch("")
 async def update_me(body: MeUpdate, user: CurrentUser) -> Me:
-    changes = body.model_dump(exclude_unset=True, exclude_none=True)
+    changes = body.model_dump(exclude_unset=True)
+    # null ha senso solo per l'accessorio (lo toglie); per gli altri campi vuol dire "non cambiare".
+    changes = {k: v for k, v in changes.items() if v is not None or k == "accessory"}
     if "color" in changes:
         changes["color"] = changes["color"].upper()
     for field, value in changes.items():

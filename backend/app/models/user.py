@@ -4,6 +4,8 @@ from datetime import UTC, datetime
 from beanie import Document, Indexed
 from pydantic import Field
 
+from app.models.accessories import Accessory
+
 # Tinte scelte perché stanno bene sull'omino di pan di zenzero e si distinguono tra loro.
 DEFAULT_COLORS = [
     "#C0392B",  # rosso bacca
@@ -36,6 +38,7 @@ class User(Document):
     avatar_url: str | None = None
     bio: str = ""
     color: str = Field(default_factory=random_color)
+    accessory: Accessory | None = None
     created_at: datetime = Field(default_factory=utcnow)
 
     class Settings:

@@ -41,6 +41,28 @@ async def test_profile_update(login):
     assert (await anna.patch("/api/me", json={"bio": "x" * 281})).status_code == 422
 
 
+async def test_accessory_is_one_or_none(login):
+    anna = await login("Anna")
+    assert anna.me["accessory"] is None
+
+    response = await anna.patch("/api/me", json={"accessory": "witch_hat"})
+    assert response.json()["accessory"] == "witch_hat"
+
+    # Cambiare altro non tocca l'accessorio.
+    response = await anna.patch("/api/me", json={"bio": "Abracadabra"})
+    assert response.json()["accessory"] == "witch_hat"
+
+    # Un accessorio sostituisce il precedente: ce n'è sempre al massimo uno.
+    response = await anna.patch("/api/me", json={"accessory": "scarf"})
+    assert response.json()["accessory"] == "scarf"
+
+    assert (await anna.patch("/api/me", json={"accessory": "jetpack"})).status_code == 422
+    assert (await anna.patch("/api/me", json={"accessory": ["tie", "scarf"]})).status_code == 422
+
+    response = await anna.patch("/api/me", json={"accessory": None})
+    assert response.json()["accessory"] is None
+
+
 async def test_room_lifecycle(login):
     anna, bruno, carla, dario = [await login(n) for n in ("Anna", "Bruno", "Carla", "Dario")]
 
@@ -85,7 +107,7 @@ async def test_room_lifecycle(login):
     for person in (anna, bruno, carla, dario):
         receiver = (await person.get(f"/api/rooms/{room_id}/my-assignment")).json()["receiver"]
         assert receiver is not None and receiver["id"] != person.me["id"]
-        assert set(receiver) == {"id", "name", "bio", "color", "avatar_url"}
+        assert set(receiver) == {"id", "name", "bio", "color", "accessory", "avatar_url"}
         receivers[person.me["id"]] = receiver["id"]
     assert sorted(receivers.values()) == sorted(receivers)
     assert receivers[bruno.me["id"]] != carla.me["id"]

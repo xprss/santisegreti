@@ -10,22 +10,22 @@ import sys
 
 from app.config import get_settings
 from app.db import init_db
-from app.models import ExclusionGroup, Room, User
+from app.models import Accessory, ExclusionGroup, Room, User
 from app.models.user import DEFAULT_COLORS
 
 PEOPLE = [
-    ("Anna", "Tè verde, gialli svedesi e piante grasse che sopravvivono a tutto."),
-    ("Bruno", "Cucino il ragù la domenica. Non chiedetemi di cantare."),
-    ("Carla", "Corro la mattina presto e colleziono tazze spaiate."),
-    ("Dario", "Vinili, caffè lungo, e un gatto che si chiama Pepe."),
-    ("Elena", "Disegno sui margini dei quaderni da quando ho cinque anni."),
-    ("Fabio", "Montagna d'estate, montagna d'inverno. Montagna."),
-    ("Giulia", "Leggo gialli e indovino sempre il colpevole a metà."),
-    ("Hamid", "Faccio il pane in casa, il lievito madre si chiama Gino."),
-    ("Irene", "Giochi da tavolo, più sono lunghi più mi piacciono."),
-    ("Luca", "Bici, birre artigianali e podcast di storia."),
-    ("Marta", "Calzini spaiati come stile di vita."),
-    ("Nico", ""),
+    ("Anna", "Tè verde, gialli svedesi e piante grasse che sopravvivono a tutto.", "santa_hat"),
+    ("Bruno", "Cucino il ragù la domenica. Non chiedetemi di cantare.", "mustache"),
+    ("Carla", "Corro la mattina presto e colleziono tazze spaiate.", "headphones"),
+    ("Dario", "Vinili, caffè lungo, e un gatto che si chiama Pepe.", "sunglasses"),
+    ("Elena", "Disegno sui margini dei quaderni da quando ho cinque anni.", "witch_hat"),
+    ("Fabio", "Montagna d'estate, montagna d'inverno. Montagna.", "ski_goggles"),
+    ("Giulia", "Leggo gialli e indovino sempre il colpevole a metà.", "glasses"),
+    ("Hamid", "Faccio il pane in casa, il lievito madre si chiama Gino.", "scarf"),
+    ("Irene", "Giochi da tavolo, più sono lunghi più mi piacciono.", "crown"),
+    ("Luca", "Bici, birre artigianali e podcast di storia.", "school_backpack"),
+    ("Marta", "Calzini spaiati come stile di vita.", "clown_wig"),
+    ("Nico", "", None),
 ]
 
 
@@ -33,13 +33,14 @@ async def main(admin_email: str) -> None:
     await init_db(get_settings())
 
     users: list[User] = []
-    for index, (name, bio) in enumerate(PEOPLE):
+    for index, (name, bio, accessory) in enumerate(PEOPLE):
         email = admin_email if index == 0 else f"{name.lower()}@example.test"
         sub = f"dev:{email.lower()}"
         user = await User.find_one(User.google_sub == sub)
         if user is None:
             user = User(google_sub=sub, email=email, name=name)
         user.bio = bio
+        user.accessory = Accessory(accessory) if accessory else None
         user.color = DEFAULT_COLORS[index % len(DEFAULT_COLORS)]
         await user.save()
         users.append(user)

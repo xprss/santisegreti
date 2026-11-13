@@ -4,7 +4,7 @@ from typing import Annotated
 from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, StringConstraints
 
-from app.models import Room, RoomStatus, User
+from app.models import Accessory, Room, RoomStatus, User
 
 HexColor = Annotated[str, StringConstraints(pattern=r"^#[0-9A-Fa-f]{6}$")]
 RoomName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
@@ -33,12 +33,18 @@ class UserPublic(BaseModel):
     name: str
     bio: str
     color: str
+    accessory: Accessory | None
     avatar_url: str | None
 
     @classmethod
     def of(cls, user: User) -> "UserPublic":
         return cls(
-            id=user.id, name=user.name, bio=user.bio, color=user.color, avatar_url=user.avatar_url
+            id=user.id,
+            name=user.name,
+            bio=user.bio,
+            color=user.color,
+            accessory=user.accessory,
+            avatar_url=user.avatar_url,
         )
 
 
@@ -54,6 +60,8 @@ class MeUpdate(BaseModel):
     name: DisplayName | None = None
     bio: Bio | None = None
     color: HexColor | None = None
+    # Uno solo, oppure null per toglierlo.
+    accessory: Accessory | None = None
 
 
 class RoomCreate(BaseModel):
