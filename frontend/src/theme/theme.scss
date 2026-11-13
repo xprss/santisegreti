@@ -221,17 +221,6 @@ body {
   }
 }
 
-.ss-garland-tape {
-  position: absolute;
-  top: 4px;
-  width: 2.25rem;
-  height: 0.9rem;
-  margin-left: -1.125rem;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 2px;
-  transform: rotate(var(--tilt, 0deg));
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
-}
 
 .ss-garland-bow {
   position: absolute;
@@ -254,18 +243,6 @@ body {
   transform: rotate(-2.5deg);
   transition: transform 0.2s ease;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -0.45rem;
-    left: 50%;
-    width: 2.25rem;
-    height: 0.85rem;
-    margin-left: -1.125rem;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 2px;
-    transform: rotate(-5deg);
-  }
 
   &:hover,
   &:focus-visible {

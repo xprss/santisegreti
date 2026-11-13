@@ -1,12 +1,5 @@
-import { useId, useMemo, type CSSProperties } from 'react'
+import { useId, useMemo } from 'react'
 import { seeded } from '../scene/random'
-
-const TAPES = [
-  { left: '9%', tilt: '-8deg' },
-  { left: '30%', tilt: '6deg' },
-  { left: '68%', tilt: '-5deg' },
-  { left: '89%', tilt: '8deg' },
-]
 
 const TILE = 96
 const HEIGHT = 34
@@ -196,14 +189,6 @@ export function Garland() {
         <rect width="100%" height={HEIGHT} fill={`url(#${patternId})`} />
       </svg>
       <VelvetBow />
-      {/* pezzetti di scotch che tengono su la ghirlanda, come i bigliettini */}
-      {TAPES.map((tape) => (
-        <span
-          key={tape.left}
-          className="ss-garland-tape"
-          style={{ left: tape.left, '--tilt': tape.tilt } as CSSProperties}
-        />
-      ))}
     </div>
   )
 }
