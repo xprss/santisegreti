@@ -17,7 +17,7 @@ export function Rooms() {
         <Link to="/stanze/nuova" className="btn btn-primary">
           Apri una stanza
         </Link>
-        <Link to="/unisciti" className="btn btn-outline-secondary">
+        <Link to="/unisciti" className="btn btn-light">
           Ho un codice di invito
         </Link>
       </div>

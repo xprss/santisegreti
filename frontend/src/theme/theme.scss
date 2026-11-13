@@ -7,6 +7,8 @@ $ss-cream: #fbf8f3;
 $ss-silver: #c0c6cc;
 $ss-gold: #c9a227;
 $ss-ink: #2b2321;
+// Verde Grinch: lo sfondo della pagina. Schede, modali e campi restano panna/bianchi.
+$ss-grinch: #7cb342;
 
 $primary: $ss-red;
 $secondary: $ss-green;
@@ -98,9 +100,27 @@ body {
 
 body {
   min-height: 100dvh;
-  // Fiocchi di neve stilizzati, piccoli e radi, sul fondo panna.
+  // Fiocchi di neve stilizzati sul fondo verde Grinch.
+  background-color: $ss-grinch;
   background-image: url('/snowflakes.svg');
   background-size: 800px 800px;
+  // Direttamente sul verde i link sono scuri (il rosso non si leggerebbe)…
+  --bs-link-color-rgb: #{to-rgb($ss-ink)};
+  --bs-link-hover-color-rgb: #{to-rgb($ss-green-dark)};
+}
+
+// …dentro schede, modali ed elenchi tornano rossi.
+.card,
+.modal-content,
+.list-group {
+  --bs-link-color-rgb: #{to-rgb($ss-red)};
+  --bs-link-hover-color-rgb: #{to-rgb($ss-red-dark)};
+}
+
+// Testi secondari appoggiati direttamente sul verde: più pieni, per restare leggibili.
+.ss-page > .text-body-secondary,
+.ss-page > p.lead {
+  color: rgba($ss-ink, 0.88) !important;
 }
 
 .ss-navbar {
@@ -179,7 +199,7 @@ body {
     right: 0;
     bottom: -1px;
     height: 22%;
-    background: linear-gradient(to bottom, rgba($body-bg, 0), rgba($body-bg, 0.85) 70%, $body-bg);
+    background: linear-gradient(to bottom, rgba($ss-grinch, 0), rgba($ss-grinch, 0.85) 70%, $ss-grinch);
     pointer-events: none;
     z-index: 1;
   }

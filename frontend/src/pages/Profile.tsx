@@ -134,7 +134,7 @@ export function Profile() {
       <div className="mt-4 text-center">
         <Button
           variant="link"
-          className="text-body-secondary"
+          className="text-dark"
           onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/') })}
         >
           Esci dall'account
