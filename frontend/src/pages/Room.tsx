@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Badge, Card, Col, Container, ListGroup, Row } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -8,7 +8,10 @@ import type { Me, RoomDetail } from '../api/types'
 import { Confirm, ErrorAlert, Loading } from '../components/feedback'
 import { Gingerbread } from '../components/Gingerbread'
 import { ParticipantsFallback } from '../scene/ParticipantsFallback'
+import { canUseWebGL } from '../scene/webgl'
 import { exchangeCountdown, formatDay, formatEuro, plural } from '../lib/format'
+
+const ChristmasScene = lazy(() => import('../scene/ChristmasScene'))
 
 export function Room() {
   const { id = '' } = useParams()
@@ -45,7 +48,13 @@ export function Room() {
 
       <div className="container-md px-0 px-md-3">
         <div className="ss-scene">
-          <ParticipantsFallback participants={data.participants} meId={me.id} />
+          {canUseWebGL() ? (
+            <Suspense fallback={<ParticipantsFallback participants={data.participants} meId={me.id} />}>
+              <ChristmasScene participants={data.participants} meId={me.id} />
+            </Suspense>
+          ) : (
+            <ParticipantsFallback participants={data.participants} meId={me.id} />
+          )}
         </div>
       </div>
 
