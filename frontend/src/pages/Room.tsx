@@ -9,7 +9,7 @@ import { Confirm, ErrorAlert, Loading } from '../components/feedback'
 import { Gingerbread } from '../components/Gingerbread'
 import { ParticipantsFallback } from '../scene/ParticipantsFallback'
 import { canUseWebGL } from '../scene/webgl'
-import { exchangeCountdown, formatDay, formatEuro, plural } from '../lib/format'
+import { daysUntil, formatEuro, parseDay, plural } from '../lib/format'
 
 const ChristmasScene = lazy(() => import('../scene/ChristmasScene'))
 
@@ -203,32 +203,59 @@ function RevealName({ name }: { name: string }) {
   )
 }
 
+const MONTHS = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
+
+function countdownLabel(days: number): string {
+  if (days > 1) return `tra ${days} giorni`
+  if (days === 1) return 'domani!'
+  if (days === 0) return 'oggi!'
+  return 'è già passato'
+}
+
+/** Le regole del gioco come tre bigliettini attaccati al verde: budget, data, tema. */
 function DetailsCard({ room }: { room: RoomDetail }) {
+  const date = room.exchange_date ? parseDay(room.exchange_date) : null
+  const days = room.exchange_date ? daysUntil(room.exchange_date) : null
+
   return (
-    <Card className="h-100">
-      <Card.Body>
-        <h2 className="h5">Le regole del gioco</h2>
-        <dl className="mb-0">
-          <dt className="small text-body-secondary fw-normal">Budget per regalo</dt>
-          <dd className="fs-5 fw-semibold">fino a {formatEuro(room.budget_eur)}</dd>
-          <dt className="small text-body-secondary fw-normal">Tema</dt>
-          <dd>{room.theme ?? 'Nessun tema: carta bianca.'}</dd>
-          <dt className="small text-body-secondary fw-normal">Scambio dei regali</dt>
-          <dd className="mb-0">
-            {room.exchange_date ? (
-              <>
-                {formatDay(room.exchange_date)}
-                <span className="d-block small text-secondary fw-semibold">
-                  {exchangeCountdown(room.exchange_date)}
-                </span>
-              </>
-            ) : (
-              'Data ancora da decidere.'
-            )}
-          </dd>
-        </dl>
-      </Card.Body>
-    </Card>
+    <section className="ss-rules h-100" aria-labelledby="rules-title">
+      <h2 id="rules-title" className="visually-hidden">
+        Le regole del gioco
+      </h2>
+
+      <div className="ss-rule ss-rule--budget">
+        <span className="ss-rule-caption">si spende al massimo</span>
+        <span className="ss-rule-big">{formatEuro(room.budget_eur)}</span>
+        <span className="ss-rule-caption">a regalo, non un centesimo di più</span>
+      </div>
+
+      <div className="ss-rule ss-rule--date">
+        <div className="ss-calendar" aria-hidden={!date}>
+          <span className="ss-calendar-month">{date ? MONTHS[date.getMonth()] : '???'}</span>
+          <span className="ss-calendar-day">{date ? date.getDate() : '?'}</span>
+        </div>
+        <span className="ss-rule-caption">
+          {days !== null ? (
+            <>
+              scambio dei regali
+              <strong className="d-block">{countdownLabel(days)}</strong>
+            </>
+          ) : (
+            <>
+              scambio dei regali
+              <strong className="d-block">data da decidere</strong>
+            </>
+          )}
+        </span>
+      </div>
+
+      <div className="ss-rule ss-rule--theme">
+        <span className="ss-rule-caption">il tema</span>
+        <span className="ss-rule-theme">
+          {room.theme ? `“${room.theme}”` : 'Carta bianca: libertà totale!'}
+        </span>
+      </div>
+    </section>
   )
 }
 

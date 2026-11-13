@@ -631,6 +631,117 @@ body {
   }
 }
 
+// Le regole del gioco: tre bigliettini un po' storti, come attaccati con lo scotch.
+.ss-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+  align-content: start;
+}
+
+.ss-rule {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 1.25rem 0.75rem 1rem;
+  border-radius: $border-radius-lg;
+  text-align: center;
+  box-shadow: 0 0.35rem 0 rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease;
+
+  // pezzetto di scotch
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.55rem;
+    left: 50%;
+    width: 3.25rem;
+    height: 1.1rem;
+    margin-left: -1.6rem;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 2px;
+    transform: rotate(-4deg);
+  }
+
+  &:hover {
+    transform: rotate(0deg) scale(1.03);
+  }
+}
+
+.ss-rule-caption {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  opacity: 0.85;
+}
+
+.ss-rule-big {
+  font-family: $headings-font-family;
+  font-size: 2.75rem;
+  line-height: 1.1;
+}
+
+.ss-rule--budget {
+  transform: rotate(-2.5deg);
+  background: radial-gradient(circle at 30% 25%, #ffe9a6 0%, #f2c94c 55%, #d9a521 100%);
+  color: #4a3200;
+}
+
+.ss-rule--date {
+  transform: rotate(2deg);
+  background: $ss-cream;
+  color: $ss-ink;
+}
+
+.ss-calendar {
+  display: flex;
+  flex-direction: column;
+  width: 4.5rem;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.15);
+}
+
+.ss-calendar-month {
+  background: $ss-red;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0;
+}
+
+.ss-calendar-day {
+  font-family: $headings-font-family;
+  font-size: 2.25rem;
+  line-height: 1.2;
+  padding-bottom: 0.15rem;
+}
+
+.ss-rule--theme {
+  grid-column: 1 / -1;
+  transform: rotate(-1deg);
+  background: linear-gradient(135deg, $ss-red 0%, $ss-red-dark 100%);
+  color: $ss-cream;
+  padding: 1.25rem 1.25rem 1.1rem;
+}
+
+.ss-rule-theme {
+  font-family: $headings-font-family;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-rule {
+    transition: none;
+  }
+}
+
 // Azioni principali a tutta larghezza sul telefono, compatte da tablet in su.
 .ss-actions {
   display: grid;
