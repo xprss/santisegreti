@@ -800,12 +800,19 @@ body {
 
 .ss-polaroid-photo {
   position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  display: block;
   aspect-ratio: 1;
-  padding-bottom: 0.35rem;
   overflow: hidden;
+
+  // Primo piano: l'omino ingrandito con la faccia al centro della foto (spalle in basso,
+  // spazio sopra per cappelli e corna).
+  > svg {
+    position: absolute;
+    width: 135%;
+    height: auto;
+    left: -17.5%;
+    top: 26%;
+  }
   background:
     radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.85) 0%, transparent 70%),
     color-mix(in srgb, var(--tint) 22%, #f3efe6);
