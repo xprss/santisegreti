@@ -1,0 +1,38 @@
+interface LogoProps {
+  size?: number
+  className?: string
+}
+
+/** Il cappello di Babbo Natale di santisegreti.it. */
+export function Logo({ size = 32, className }: LogoProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      className={className}
+      role="img"
+      aria-label="santisegreti.it"
+    >
+      <path
+        d="M10 47c1-14 7-29 19-35 9-4.5 19-2.5 24 4.5 2.4 3.3 3.2 7 3 10.5-2.6-2.4-6.3-3.2-9.5-1.6 3 6 5 13.5 5.5 21.6z"
+        fill="#C8232C"
+      />
+      <path
+        d="M47.5 25.4c3-6.2 1.5-12.2-3.5-15.1 5.2 0.3 9.6 3.6 11.1 8.6.6 2 .7 4.1.4 6.1-2.4-1.3-5.2-1.4-8-.4z"
+        fill="#9E1A22"
+      />
+      <circle cx="54.5" cy="27.5" r="6.5" fill="#FBF8F3" stroke="#D9D4CC" strokeWidth="1.2" />
+      <rect
+        x="5"
+        y="43"
+        width="49"
+        height="14"
+        rx="7"
+        fill="#FBF8F3"
+        stroke="#D9D4CC"
+        strokeWidth="1.2"
+      />
+    </svg>
+  )
+}

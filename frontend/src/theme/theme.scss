@@ -1,0 +1,251 @@
+// Palette natalizia: rosso, verde, bianco, argento, oro.
+$ss-red: #b3202a;
+$ss-red-dark: #8e1b22;
+$ss-green: #1e5b3a;
+$ss-green-dark: #16432c;
+$ss-cream: #fbf8f3;
+$ss-silver: #c0c6cc;
+$ss-gold: #c9a227;
+$ss-ink: #2b2321;
+
+$primary: $ss-red;
+$secondary: $ss-green;
+$success: $ss-green;
+$danger: $ss-red-dark;
+$warning: $ss-gold;
+$info: #4f7c8a;
+$light: $ss-cream;
+$dark: $ss-green-dark;
+
+$body-bg: $ss-cream;
+$body-color: $ss-ink;
+$body-secondary-color: rgba($ss-ink, 0.68);
+$link-color: $ss-red;
+$link-hover-color: $ss-red-dark;
+
+$font-family-sans-serif: 'Nunito Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+$headings-font-family: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+$headings-font-weight: 600;
+$font-size-base: 1rem;
+$line-height-base: 1.55;
+
+$border-radius: 0.75rem;
+$border-radius-sm: 0.5rem;
+$border-radius-lg: 1rem;
+$border-color: rgba($ss-ink, 0.12);
+
+// Tocco comodo: bottoni e campi alti almeno 44px sul telefono.
+$input-btn-padding-y: 0.625rem;
+$input-btn-padding-x: 1.125rem;
+$btn-font-weight: 700;
+$input-bg: #fff;
+
+$card-border-color: rgba($ss-gold, 0.28);
+$card-cap-bg: transparent;
+$card-spacer-y: 1.25rem;
+$card-spacer-x: 1.25rem;
+
+$navbar-dark-color: rgba($ss-cream, 0.85);
+$navbar-dark-hover-color: $ss-cream;
+$navbar-dark-active-color: $ss-cream;
+
+$modal-content-border-radius: 1rem;
+
+$custom-colors: (
+  'gold': $ss-gold,
+  'silver': $ss-silver,
+  'cream': $ss-cream,
+);
+
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+$theme-colors: map-merge($theme-colors, $custom-colors);
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+@import 'bootstrap/scss/root';
+@import 'bootstrap/scss/reboot';
+@import 'bootstrap/scss/type';
+@import 'bootstrap/scss/images';
+@import 'bootstrap/scss/containers';
+@import 'bootstrap/scss/grid';
+@import 'bootstrap/scss/forms';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/transitions';
+@import 'bootstrap/scss/dropdown';
+@import 'bootstrap/scss/button-group';
+@import 'bootstrap/scss/nav';
+@import 'bootstrap/scss/navbar';
+@import 'bootstrap/scss/card';
+@import 'bootstrap/scss/badge';
+@import 'bootstrap/scss/alert';
+@import 'bootstrap/scss/list-group';
+@import 'bootstrap/scss/close';
+@import 'bootstrap/scss/modal';
+@import 'bootstrap/scss/tooltip';
+@import 'bootstrap/scss/spinners';
+@import 'bootstrap/scss/placeholders';
+@import 'bootstrap/scss/helpers';
+@import 'bootstrap/scss/utilities/api';
+
+// --- Elementi dell'app ------------------------------------------------------
+
+html,
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+.h1,
+.h2 {
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+  letter-spacing: -0.01em;
+}
+
+.ss-navbar {
+  background: $ss-green-dark;
+  border-bottom: 3px solid $ss-gold;
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
+}
+
+.ss-brand {
+  font-family: $headings-font-family;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.ss-page {
+  padding-top: 1.25rem;
+  padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+
+  @include media-breakpoint-up(md) {
+    padding-top: 2rem;
+  }
+}
+
+.ss-narrow {
+  max-width: 40rem;
+}
+
+// Card che porta a una stanza: tutta la superficie è toccabile.
+.ss-room-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1.5rem rgba($ss-green-dark, 0.12);
+  }
+}
+
+// La scena dell'albero: verticale sul telefono, più larga da tablet in su.
+.ss-scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 72dvh;
+  background: radial-gradient(ellipse at 50% 35%, #1d3a4f 0%, #0d1b2a 70%);
+  overflow: hidden;
+  touch-action: pan-y;
+
+  @include media-breakpoint-up(md) {
+    aspect-ratio: 16 / 9;
+    border-radius: $border-radius-lg;
+  }
+}
+
+.ss-scene-card {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  max-width: 24rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba($ss-cream, 0.96);
+  color: $ss-ink;
+  border-radius: $border-radius-lg;
+  padding: 0.75rem 0.875rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.ss-scene-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.75rem;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgba($ss-ink, 0.6);
+  pointer-events: none;
+}
+
+// Codice di invito: grande, leggibile, facile da dettare.
+.ss-code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: clamp(2rem, 11vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: $ss-green-dark;
+  padding-left: 0.2em; // compensa il letter-spacing finale
+}
+
+.ss-code-input {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 1.75rem;
+  letter-spacing: 0.3em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ss-swatch {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px $border-color;
+  padding: 0;
+
+  &[aria-pressed='true'] {
+    box-shadow: 0 0 0 3px $ss-gold;
+  }
+}
+
+.ss-reveal {
+  background: linear-gradient(160deg, $ss-green 0%, $ss-green-dark 100%);
+  color: $ss-cream;
+  border: 0;
+
+  .text-body-secondary {
+    color: rgba($ss-cream, 0.75) !important;
+  }
+}
+
+// Azioni principali a tutta larghezza sul telefono, compatte da tablet in su.
+.ss-actions {
+  display: grid;
+  gap: 0.75rem;
+
+  @include media-breakpoint-up(sm) {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-room-card {
+    transition: none;
+  }
+}
