@@ -98,6 +98,9 @@ body {
 
 body {
   min-height: 100dvh;
+  // Fiocchi di neve stilizzati, piccoli e radi, sul fondo panna.
+  background-image: url('/snowflakes.svg');
+  background-size: 168px 168px;
 }
 
 .ss-navbar {
