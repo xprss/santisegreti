@@ -24,8 +24,8 @@ $link-color: $ss-red;
 $link-hover-color: $ss-red-dark;
 
 $font-family-sans-serif: 'Fuzzy Bubbles', system-ui, -apple-system, 'Segoe UI', sans-serif;
-$headings-font-family: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
-$headings-font-weight: 600;
+$headings-font-family: 'Henny Penny', Georgia, serif;
+$headings-font-weight: 400;
 $font-size-base: 1rem;
 $line-height-base: 1.55;
 
@@ -100,20 +100,6 @@ body {
   min-height: 100dvh;
 }
 
-h1,
-h2,
-.h1,
-.h2 {
-  font-variation-settings: 'SOFT' 100, 'WONK' 1;
-  letter-spacing: -0.01em;
-}
-
-.ss-room-title {
-  font-family: 'Henny Penny', $headings-font-family;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-}
-
 .ss-navbar {
   background: $ss-green-dark;
   border-bottom: 3px solid $ss-gold;
@@ -122,7 +108,7 @@ h2,
 
 .ss-brand {
   font-family: $headings-font-family;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
 }

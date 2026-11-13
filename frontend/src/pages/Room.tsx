@@ -37,7 +37,7 @@ export function Room() {
           ← Le tue stanze
         </Link>
         <div className="d-flex flex-wrap align-items-center gap-2 mt-1">
-          <h1 className="h2 mb-0 me-auto ss-room-title">{data.name}</h1>
+          <h1 className="h2 mb-0 me-auto">{data.name}</h1>
           {data.is_admin && (
             <Link to={`/stanze/${data.id}/gestisci`} className="btn btn-outline-secondary btn-sm">
               Gestisci la stanza

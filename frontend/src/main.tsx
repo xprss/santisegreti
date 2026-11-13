@@ -1,4 +1,3 @@
-import '@fontsource-variable/fraunces/full.css'
 import '@fontsource/fuzzy-bubbles/400.css'
 import '@fontsource/fuzzy-bubbles/700.css'
 import '@fontsource/henny-penny'
