@@ -977,6 +977,156 @@ body {
   }
 }
 
+.ss-sticker--red {
+  background: linear-gradient(135deg, #c8323d 0%, $ss-red 45%, $ss-red-dark 100%);
+  color: $ss-cream;
+}
+
+// Le tue stanze: due bigliettini-azione e un bigliettino per stanza.
+.ss-home-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0.75rem 0 2rem;
+}
+
+.ss-home-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 8.5rem;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: inherit;
+    transform: rotate(0deg) scale(1.04);
+  }
+}
+
+.ss-home-action-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: $ss-cream;
+  color: $ss-red;
+  font-family: $headings-font-family;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.ss-home-action-code {
+  padding: 0.2rem 0.5rem;
+  border: 2px dashed rgba(#4a3200, 0.5);
+  border-radius: 0.4rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.ss-home-action-label {
+  font-family: $headings-font-family;
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+.ss-room-sticker {
+  padding: 1.75rem 1.25rem 1.25rem;
+  transition: transform 0.2s ease;
+
+  &:hover,
+  &:focus-within {
+    transform: rotate(0deg) scale(1.02);
+  }
+
+  .stretched-link {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.ss-room-sticker-name {
+  margin: 0 0 0.25rem;
+  font-size: 2rem;
+  line-height: 1.15;
+  padding-right: 3.5rem;
+}
+
+.ss-room-sticker-theme {
+  margin-bottom: 0.75rem;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.ss-room-sticker-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ss-fact {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5.25rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: $border-radius;
+  background: #fff;
+  box-shadow: 0 0 0 1px $border-color;
+  font-size: 0.75rem;
+  line-height: 1.2;
+
+  strong {
+    font-family: $headings-font-family;
+    font-weight: 400;
+    font-size: 1.35rem;
+  }
+}
+
+.ss-fact--gold {
+  background: #fff3c4;
+}
+
+.ss-fact--red {
+  background: $ss-red;
+  color: $ss-cream;
+  box-shadow: none;
+}
+
+.ss-room-sticker-admin {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: $ss-gold;
+  color: $ss-ink;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+// Timbro "Estrazione fatta", un po' sbilenco come uno stampo a inchiostro.
+.ss-stamp {
+  align-self: center;
+  margin: 0.25rem 0 0 auto;
+  padding: 0.15rem 0.5rem;
+  border: 2px solid $ss-red;
+  border-radius: 0.4rem;
+  color: $ss-red;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transform: rotate(-8deg);
+  opacity: 0.85;
+}
+
 // Il profilo esce dal centro: dissolvenza e un piccolo rimbalzo.
 .modal.fade .ss-profile-dialog {
   opacity: 0;

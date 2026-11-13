@@ -1,24 +1,51 @@
-import { Badge, Card, Container, Stack } from 'react-bootstrap'
+import type { CSSProperties } from 'react'
+import { Container } from 'react-bootstrap'
 import { Link } from 'react-router'
 import { useRooms } from '../api/hooks'
 import type { RoomSummary } from '../api/types'
 import { ErrorAlert, Loading } from '../components/feedback'
 import { Logo } from '../components/Logo'
-import { exchangeCountdown, formatEuro, plural } from '../lib/format'
+import { daysUntil, formatEuro, parseDay, plural } from '../lib/format'
 
+const TILTS = [-1.5, 1.2, -0.8, 1.6, -1.2]
+const MONTHS = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
+
+function countdown(isoDay: string): string {
+  const days = daysUntil(isoDay)
+  if (days > 1) return `tra ${days} giorni`
+  if (days === 1) return 'domani!'
+  if (days === 0) return 'oggi!'
+  return 'già passato'
+}
+
+/** Le tue stanze, nello stile della stanza: due bigliettini-azione e un bigliettino per stanza. */
 export function Rooms() {
   const rooms = useRooms()
 
   return (
     <Container className="ss-page ss-narrow">
-      <h1 className="h2 mb-3">Le tue stanze</h1>
+      <h1 className="visually-hidden">Le tue stanze</h1>
 
-      <div className="ss-actions mb-4">
-        <Link to="/stanze/nuova" className="btn btn-primary">
-          Apri una stanza
+      <div className="ss-home-actions">
+        <Link
+          to="/stanze/nuova"
+          className="ss-sticker ss-sticker--red ss-home-action"
+          style={{ '--tilt': '-2deg' } as CSSProperties}
+        >
+          <span className="ss-home-action-icon" aria-hidden>
+            +
+          </span>
+          <span className="ss-home-action-label">Apri una stanza</span>
         </Link>
-        <Link to="/unisciti" className="btn btn-light">
-          Ho un codice di invito
+        <Link
+          to="/unisciti"
+          className="ss-sticker ss-sticker--gold ss-home-action"
+          style={{ '--tilt': '1.8deg' } as CSSProperties}
+        >
+          <span className="ss-home-action-code" aria-hidden>
+            ABC234
+          </span>
+          <span className="ss-home-action-label">Ho un codice</span>
         </Link>
       </div>
 
@@ -26,55 +53,63 @@ export function Rooms() {
       <ErrorAlert error={rooms.error} />
 
       {rooms.data?.length === 0 && (
-        <Card className="text-center">
-          <Card.Body className="py-5">
-            <Logo size={56} className="mb-3 opacity-75" />
-            <p className="mb-1 fw-semibold">Qui non c'è ancora nessuna stanza.</p>
-            <p className="text-body-secondary mb-0">
-              Ne apriamo una? Oppure, se qualcuno ti ha mandato un codice, si entra da "Ho un
-              codice di invito".
-            </p>
-          </Card.Body>
-        </Card>
+        <div className="ss-sticker text-center" style={{ '--tilt': '1deg' } as CSSProperties}>
+          <Logo size={64} className="mb-2" />
+          <p className="ss-sticker-caption mb-1">Ancora nessuna stanza</p>
+          <p className="mb-0">Ne apriamo una? O, se ti hanno mandato un codice, si entra da lì.</p>
+        </div>
       )}
 
-      <Stack gap={3}>
-        {rooms.data?.map((room) => (
-          <RoomCard key={room.id} room={room} />
+      <div className="ss-stickers">
+        {rooms.data?.map((room, i) => (
+          <RoomSticker key={room.id} room={room} tilt={TILTS[i % TILTS.length]} />
         ))}
-      </Stack>
+      </div>
     </Container>
   )
 }
 
-function RoomCard({ room }: { room: RoomSummary }) {
+function RoomSticker({ room, tilt }: { room: RoomSummary; tilt: number }) {
+  const date = room.exchange_date ? parseDay(room.exchange_date) : null
+
   return (
-    <Card className="ss-room-card position-relative">
-      <Card.Body>
-        <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
-          <h2 className="h5 mb-0">
-            <Link to={`/stanze/${room.id}`} className="stretched-link text-reset text-decoration-none">
-              {room.name}
-            </Link>
-          </h2>
-          {room.status === 'drawn' && (
-            <Badge bg="secondary" className="flex-shrink-0">
-              Estrazione fatta
-            </Badge>
-          )}
-        </div>
-        <p className="text-body-secondary small mb-0">
-          {plural(room.participant_count, 'persona', 'persone')} · fino a{' '}
-          {formatEuro(room.budget_eur)}
-          {room.is_admin && ' · sei l\'admin'}
-        </p>
-        {room.theme && <p className="mb-0 mt-2">Tema: {room.theme}</p>}
-        {room.exchange_date && (
-          <p className="mb-0 mt-2 small text-secondary fw-semibold">
-            {exchangeCountdown(room.exchange_date)}
-          </p>
+    <article
+      className="ss-sticker ss-room-sticker"
+      style={{ '--tilt': `${tilt}deg` } as CSSProperties}
+    >
+      <h2 className="ss-room-sticker-name">
+        <Link to={`/stanze/${room.id}`} className="stretched-link">
+          {room.name}
+        </Link>
+      </h2>
+      {room.theme && <p className="ss-room-sticker-theme">“{room.theme}”</p>}
+
+      <div className="ss-room-sticker-facts">
+        <span className="ss-fact">
+          <strong>{room.participant_count}</strong>
+          {room.participant_count === 1 ? 'persona' : 'persone'}
+        </span>
+        <span className="ss-fact ss-fact--gold">
+          <strong>{formatEuro(room.budget_eur)}</strong>a regalo
+        </span>
+        {date && room.exchange_date && (
+          <span className="ss-fact ss-fact--red">
+            <strong>
+              {date.getDate()} {MONTHS[date.getMonth()]}
+            </strong>
+            {countdown(room.exchange_date)}
+          </span>
         )}
-      </Card.Body>
-    </Card>
+        {room.status === 'drawn' && <span className="ss-stamp">Estrazione fatta</span>}
+      </div>
+      {room.is_admin && (
+        <span className="ss-room-sticker-admin" title="Sei l'admin di questa stanza">
+          admin
+        </span>
+      )}
+      <span className="visually-hidden">
+        {plural(room.participant_count, 'persona', 'persone')}
+      </span>
+    </article>
   )
 }
