@@ -9,25 +9,15 @@ import {
   QuadraticBezierCurve3,
   SphereGeometry,
   TubeGeometry,
-  Vector3,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import type { UserPublic } from '../api/types'
 import { GINGERBREAD_PATH } from '../components/Gingerbread'
+import { accessoryMeshes } from './accessories3d'
+import { BEVEL, DEPTH, FOOT, SCALE, toScene } from './cookieSpace'
 import { ringRadius } from './layout'
 import { hashString, seeded } from './random'
-
-// Dalla sagoma SVG (0–100 × 0–120, y verso il basso) alle unità della scena.
-const SCALE = 0.0105
-const BEVEL = 3
-const DEPTH = 12
-const FOOT = 112 + BEVEL
-const FRONT_Z = ((DEPTH / 2 + BEVEL) * SCALE) + 0.004
-
-function toScene(x: number, y: number): Vector3 {
-  return new Vector3((x - 50) * SCALE, (FOOT - y) * SCALE, FRONT_Z)
-}
 
 function buildGeometries() {
   const svg = new SVGLoader().parse(
@@ -199,8 +189,8 @@ function Cookie({
           />
         </mesh>
       )}
-      <group ref={body}>
-        <mesh geometry={geometries.cookie} {...pointer}>
+      <group ref={body} {...pointer}>
+        <mesh geometry={geometries.cookie}>
           <meshStandardMaterial color={color} roughness={0.72} />
         </mesh>
         <mesh geometry={geometries.icing}>
@@ -209,6 +199,21 @@ function Cookie({
         <mesh geometry={geometries.eyes}>
           <meshStandardMaterial color="#2a1c14" roughness={0.3} />
         </mesh>
+        {person.accessory &&
+          accessoryMeshes(person.accessory).map((part, i) => (
+            <mesh key={i} geometry={part.geometry}>
+              <meshStandardMaterial
+                color={part.color}
+                roughness={part.metal ? 0.3 : 0.6}
+                metalness={part.metal ? 0.55 : 0}
+                emissive={part.glow ? part.color : '#000000'}
+                emissiveIntensity={part.glow ? 1.2 : 0}
+                transparent={part.opacity < 1}
+                opacity={part.opacity}
+                toneMapped={!part.glow}
+              />
+            </mesh>
+          ))}
       </group>
     </group>
   )
