@@ -37,11 +37,7 @@ export function Profile() {
       <Link to="/" className="small d-inline-block mb-2">
         ← Le tue stanze
       </Link>
-      <h1 className="h2 mb-2">Il tuo profilo</h1>
-      <p className="text-body-secondary mb-4">
-        Nome, bio e colore li vedono le persone delle tue stanze, e aiutano chi ti ha pescato a
-        scegliere il regalo.
-      </p>
+      <h1 className="h2 mb-4">Il tuo profilo</h1>
 
       <Card>
         <Card.Body>
