@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Alert, Card, Container, Form, Spinner } from 'react-bootstrap'
 import { Button } from '../components/Button'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useLogout, useMe, useUpdateMe } from '../api/hooks'
 import { accessoryLabel, type AccessoryId } from '../accessories/catalog'
 import type { Me } from '../api/types'
@@ -34,10 +34,7 @@ export function Profile() {
 
   return (
     <Container className="ss-page ss-narrow">
-      <Link to="/" className="small d-inline-block mb-2">
-        ← Le tue stanze
-      </Link>
-      <h1 className="h2 mb-4">Il tuo profilo</h1>
+      <h1 className="visually-hidden">Il tuo profilo</h1>
 
       <Card>
         <Card.Body>
