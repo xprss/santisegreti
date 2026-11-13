@@ -348,6 +348,7 @@ body {
   border: 2px solid transparent;
   border-radius: $border-radius;
   background: #fff;
+  color: $ss-ink;
   box-shadow: 0 0 0 1px $border-color;
   font-size: 0.75rem;
   line-height: 1.2;
@@ -358,7 +359,8 @@ body {
 
   .btn-check:checked + & {
     border-color: $ss-gold;
-    background: rgba($ss-gold, 0.12);
+    background: #fff3c4;
+    box-shadow: 0 0 0 3px rgba($ss-gold, 0.6);
     font-weight: 700;
   }
 
@@ -877,6 +879,102 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// Profilo: la propria polaroid in grande, a figura intera.
+.ss-polaroid--hero {
+  width: min(16rem, 78%);
+  margin: 1.25rem auto 2rem;
+  padding: 0.75rem 0.75rem 0.9rem;
+  cursor: default;
+
+  &:hover {
+    transform: rotate(var(--tilt, 0deg));
+    box-shadow: 0 0.35rem 0.6rem rgba(0, 0, 0, 0.18);
+  }
+
+  .ss-polaroid-photo {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 2rem 0 0.75rem;
+
+    > svg {
+      position: static;
+      width: 62%;
+      height: auto;
+    }
+  }
+
+  .ss-polaroid-name {
+    font-size: 2rem;
+    margin-top: 0.5rem;
+  }
+}
+
+// Bigliettini del profilo: come le regole della stanza, ma con dentro i campi.
+.ss-stickers {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.ss-sticker {
+  position: relative;
+  margin: 0;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border: 0;
+  border-radius: $border-radius-lg;
+  background: $ss-cream;
+  color: $ss-ink;
+  box-shadow: 0 0.35rem 0 rgba(0, 0, 0, 0.12);
+  transform: rotate(var(--tilt, 0deg));
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.55rem;
+    left: 50%;
+    width: 3.25rem;
+    height: 1.1rem;
+    margin-left: -1.6rem;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 2px;
+    transform: rotate(-4deg);
+  }
+
+  // Le legende dei fieldset finiscono dentro il riquadro, come le etichette.
+  > legend {
+    float: left;
+    width: 100%;
+  }
+
+  > legend + * {
+    clear: left;
+  }
+}
+
+.ss-sticker-caption {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: $headings-font-family;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.ss-sticker--gold {
+  background: radial-gradient(circle at 30% 25%, #ffe9a6 0%, #f2c94c 55%, #d9a521 100%);
+  color: #4a3200;
+}
+
+.ss-sticker--green {
+  background: linear-gradient(135deg, #2d7a4c 0%, $ss-green 45%, $ss-green-dark 100%);
+  color: $ss-cream;
+
+  .text-body-secondary {
+    color: rgba($ss-cream, 0.85) !important;
+  }
 }
 
 // Il profilo esce dal centro: dissolvenza e un piccolo rimbalzo.
