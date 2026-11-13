@@ -1,0 +1,133 @@
+from datetime import date, datetime
+from typing import Annotated
+
+from beanie import PydanticObjectId
+from pydantic import BaseModel, Field, StringConstraints
+
+from app.models import Room, RoomStatus, User
+
+HexColor = Annotated[str, StringConstraints(pattern=r"^#[0-9A-Fa-f]{6}$")]
+RoomName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+Theme = Annotated[str, StringConstraints(strip_whitespace=True, max_length=120)]
+DisplayName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+Bio = Annotated[str, StringConstraints(strip_whitespace=True, max_length=280)]
+Budget = Annotated[int, Field(ge=1, le=10_000)]
+
+
+class AppConfig(BaseModel):
+    google_client_id: str
+    dev_login: bool
+
+
+class GoogleLoginIn(BaseModel):
+    credential: str
+
+
+class DevLoginIn(BaseModel):
+    email: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=120)]
+    name: DisplayName
+
+
+class UserPublic(BaseModel):
+    id: PydanticObjectId
+    name: str
+    bio: str
+    color: str
+    avatar_url: str | None
+
+    @classmethod
+    def of(cls, user: User) -> "UserPublic":
+        return cls(
+            id=user.id, name=user.name, bio=user.bio, color=user.color, avatar_url=user.avatar_url
+        )
+
+
+class Me(UserPublic):
+    email: str
+
+    @classmethod
+    def of(cls, user: User) -> "Me":
+        return cls(**UserPublic.of(user).model_dump(), email=user.email)
+
+
+class MeUpdate(BaseModel):
+    name: DisplayName | None = None
+    bio: Bio | None = None
+    color: HexColor | None = None
+
+
+class RoomCreate(BaseModel):
+    name: RoomName
+    theme: Theme | None = None
+    budget_eur: Budget = 25
+    exchange_date: date | None = None
+
+
+class RoomUpdate(BaseModel):
+    name: RoomName | None = None
+    theme: Theme | None = None
+    budget_eur: Budget | None = None
+    exchange_date: date | None = None
+
+
+class RoomSummary(BaseModel):
+    id: PydanticObjectId
+    name: str
+    theme: str | None
+    budget_eur: int
+    exchange_date: date | None
+    status: RoomStatus
+    participant_count: int
+    is_admin: bool
+
+    @classmethod
+    def of(cls, room: Room, user: User) -> "RoomSummary":
+        return cls(
+            id=room.id,
+            name=room.name,
+            theme=room.theme,
+            budget_eur=room.budget_eur,
+            exchange_date=room.exchange_date,
+            status=room.status,
+            participant_count=len(room.participant_ids),
+            is_admin=room.admin_id == user.id,
+        )
+
+
+class ExclusionGroupIn(BaseModel):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+    member_ids: Annotated[list[PydanticObjectId], Field(min_length=2)]
+
+
+class ExclusionGroupOut(BaseModel):
+    id: str
+    name: str
+    member_ids: list[PydanticObjectId]
+
+
+class RoomDetail(RoomSummary):
+    admin_id: PydanticObjectId
+    drawn_at: datetime | None
+    participants: list[UserPublic]
+    # Solo per l'admin: agli altri partecipanti arriva vuoto.
+    exclusion_groups: list[ExclusionGroupOut]
+
+
+class InviteOut(BaseModel):
+    code: str
+    expires_at: datetime
+    # Il countdown nel browser parte da qui: non dipende dall'orologio del dispositivo.
+    expires_in: int
+
+
+class RedeemIn(BaseModel):
+    code: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20)]
+
+
+class RedeemOut(BaseModel):
+    room_id: PydanticObjectId
+    already_member: bool
+
+
+class MyAssignment(BaseModel):
+    receiver: UserPublic | None
