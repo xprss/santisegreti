@@ -209,7 +209,28 @@ body {
   margin-top: -16px;
   margin-bottom: -18px;
   pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+
+  // Ritagliata come un adesivo: bordino crema tutto intorno e ombra netta, come i bigliettini.
+  > svg {
+    filter:
+      drop-shadow(1.5px 0 0 #fffdf8)
+      drop-shadow(-1.5px 0 0 #fffdf8)
+      drop-shadow(0 1.5px 0 #fffdf8)
+      drop-shadow(0 -1.5px 0 #fffdf8)
+      drop-shadow(0 3px 0 rgba(0, 0, 0, 0.2));
+  }
+}
+
+.ss-garland-tape {
+  position: absolute;
+  top: 4px;
+  width: 2.25rem;
+  height: 0.9rem;
+  margin-left: -1.125rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  transform: rotate(var(--tilt, 0deg));
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
 }
 
 .ss-garland-bow {
