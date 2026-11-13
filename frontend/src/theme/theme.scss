@@ -166,7 +166,35 @@ body {
 
   @include media-breakpoint-up(md) {
     aspect-ratio: 16 / 9;
-    border-radius: $border-radius-lg;
+  }
+}
+
+// Nome della stanza e azioni dell'admin appoggiati in cima alla scena, sotto il boa.
+.ss-scene-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.75rem;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  h1 {
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  }
+
+  .btn {
+    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 

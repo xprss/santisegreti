@@ -32,30 +32,24 @@ export function Room() {
   const data = room.data
   return (
     <>
-      <Container className="pt-3 pb-2">
-        <Link to="/" className="small">
-          ← Le tue stanze
-        </Link>
-        <div className="d-flex flex-wrap align-items-center gap-2 mt-1">
+      <div className="ss-scene">
+        {canUseWebGL() ? (
+          <Suspense fallback={<ParticipantsFallback participants={data.participants} meId={me.id} />}>
+            <ChristmasScene participants={data.participants} meId={me.id} />
+          </Suspense>
+        ) : (
+          <ParticipantsFallback participants={data.participants} meId={me.id} />
+        )}
+
+        {/* Titolo e azioni sopra la scena: i tocchi fuori da qui arrivano al canvas. */}
+        <Container className="ss-scene-header">
           <h1 className="h2 mb-0 me-auto">{data.name}</h1>
           {data.is_admin && (
-            <Link to={`/stanze/${data.id}/gestisci`} className="btn btn-outline-secondary btn-sm">
+            <Link to={`/stanze/${data.id}/gestisci`} className="btn btn-outline-light btn-sm">
               Gestisci la stanza
             </Link>
           )}
-        </div>
-      </Container>
-
-      <div className="container-md px-0 px-md-3">
-        <div className="ss-scene">
-          {canUseWebGL() ? (
-            <Suspense fallback={<ParticipantsFallback participants={data.participants} meId={me.id} />}>
-              <ChristmasScene participants={data.participants} meId={me.id} />
-            </Suspense>
-          ) : (
-            <ParticipantsFallback participants={data.participants} meId={me.id} />
-          )}
-        </div>
+        </Container>
       </div>
 
       <Container className="ss-page">

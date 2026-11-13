@@ -30,7 +30,8 @@ function Rig({ radius, spinning }: { radius: number; spinning: boolean }) {
     if (spinning) angle.current += Math.min(delta, 0.1) * 0.07
     const aspect = size.width / Math.max(size.height, 1)
     const span = 2 * Math.tan(MathUtils.degToRad(FOV / 2))
-    const needHeight = TREE_TOP + 1.6
+    // Margine per il titolo sopra e per gli omini in primo piano sotto.
+    const needHeight = TREE_TOP + 3.6
     const needWidth = 2 * (radius + 0.9)
     const distance = Math.max(needHeight / span, needWidth / (span * aspect)) * 1.05
     const elevation = 0.3
