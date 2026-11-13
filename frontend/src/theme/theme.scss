@@ -439,8 +439,8 @@ body {
   border: 2px solid rgba($ss-gold, 0.8);
   background:
     radial-gradient(circle at 28% 45%, rgba(#ffd34d, 0.45) 0%, rgba(#ffd34d, 0) 45%),
-    radial-gradient(ellipse at 70% 120%, rgba($ss-red, 0.55) 0%, rgba($ss-red, 0) 60%),
-    linear-gradient(160deg, #1f5a37 0%, $ss-green-dark 60%, #0f2e1d 100%);
+    radial-gradient(ellipse at 70% 120%, rgba(#4a0410, 0.6) 0%, rgba(#4a0410, 0) 60%),
+    linear-gradient(160deg, #c8323d 0%, $ss-red 45%, $ss-red-dark 100%);
   box-shadow: 0 0 2rem rgba(#ffd34d, 0.35), inset 0 0 2.5rem rgba(0, 0, 0, 0.35);
   isolation: isolate;
 }
