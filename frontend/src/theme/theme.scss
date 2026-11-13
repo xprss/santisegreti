@@ -326,6 +326,160 @@ body {
   }
 }
 
+// "A chi farai il regalo?": la scheda intera è un bottone che brilla e invita al tocco.
+.ss-reveal-trigger {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 9rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  border: 2px solid rgba($ss-gold, 0.75);
+  border-radius: $border-radius-lg;
+  background: radial-gradient(ellipse at 50% 40%, #2d7a4c 0%, $ss-green 45%, $ss-green-dark 100%);
+  color: $ss-cream;
+  overflow: hidden;
+  cursor: pointer;
+  animation: ss-glow 2.4s ease-in-out infinite;
+  transition: transform 0.15s ease;
+
+  // Riflesso dorato che attraversa la scheda.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -50% auto -50% -60%;
+    width: 40%;
+    background: linear-gradient(100deg, transparent, rgba(#ffe08a, 0.35), transparent);
+    transform: skewX(-20deg);
+    animation: ss-shimmer 3.2s ease-in-out infinite;
+  }
+
+  &:hover,
+  &:focus-visible {
+    transform: scale(1.015);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 3px solid $ss-gold;
+    outline-offset: 3px;
+  }
+}
+
+.ss-reveal-trigger-title {
+  position: relative;
+  font-family: $headings-font-family;
+  font-size: clamp(1.75rem, 7vw, 2.25rem);
+  line-height: 1.15;
+  text-shadow: 0 0 18px rgba(#ffd34d, 0.55);
+  animation: ss-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes ss-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0.5rem rgba($ss-gold, 0.35), 0 0 0 0 rgba($ss-gold, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 1.75rem rgba(#ffd34d, 0.75), 0 0 0 6px rgba($ss-gold, 0.12);
+  }
+}
+
+@keyframes ss-shimmer {
+  0%,
+  35% {
+    left: -60%;
+  }
+  75%,
+  100% {
+    left: 130%;
+  }
+}
+
+@keyframes ss-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+// Rivelazione: l'omino salta fuori, il nome si apre, scintille dorate tutto intorno.
+.ss-reveal-content {
+  position: relative;
+  animation: ss-pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.ss-reveal-omino {
+  animation: ss-jump 0.8s cubic-bezier(0.3, 1.6, 0.5, 1) 0.1s both;
+}
+
+.ss-reveal-name {
+  font-family: $headings-font-family;
+  font-size: clamp(2rem, 9vw, 2.75rem);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(#ffd34d, 0.6);
+  animation: ss-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 0.2s both;
+}
+
+.ss-reveal-sparkles {
+  position: absolute;
+  top: 3rem;
+  left: 50%;
+  pointer-events: none;
+
+  span {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #ffd34d;
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    --angle: calc(var(--i) * 36deg);
+    animation: ss-sparkle 1.1s ease-out 0.15s both;
+  }
+}
+
+@keyframes ss-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ss-jump {
+  0% {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.4) rotate(-12deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes ss-sparkle {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateY(0) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(-5.5rem) scale(1.3);
+  }
+}
+
 // Azioni principali a tutta larghezza sul telefono, compatte da tablet in su.
 .ss-actions {
   display: grid;
@@ -340,5 +494,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .ss-room-card {
     transition: none;
+  }
+
+  .ss-reveal-trigger,
+  .ss-reveal-trigger::before,
+  .ss-reveal-trigger-title,
+  .ss-reveal-content,
+  .ss-reveal-omino,
+  .ss-reveal-name,
+  .ss-reveal-sparkles span {
+    animation: none;
   }
 }

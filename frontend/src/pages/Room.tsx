@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useState, type CSSProperties } from 'react'
 import { Badge, Card, Col, Container, ListGroup, Row } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -93,42 +93,42 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
   }
 
   const receiver = assignment.data?.receiver
+
+  if (!revealed) {
+    // Tutta la scheda è il bottone: brilla finché non la tocchi.
+    return (
+      <button type="button" className="ss-reveal-trigger h-100" onClick={() => setRevealed(true)}>
+        <span className="ss-reveal-trigger-title">A chi farai il regalo?</span>
+      </button>
+    )
+  }
+
   return (
     <Card className="h-100 ss-reveal">
-      <Card.Body>
-        <h2 className="h5">A chi farai il regalo?</h2>
-        {!revealed && (
-          <>
-            <p className="text-body-secondary">
-              L'estrazione è fatta. Il nome resta coperto finché non lo vuoi vedere, così nessuno
-              sbircia dallo schermo.
-            </p>
-            <div className="d-grid d-sm-flex">
-              <Button variant="warning" onClick={() => setRevealed(true)}>
-                Scopri il nome
-              </Button>
-            </div>
-          </>
-        )}
-        {revealed && assignment.isPending && <Loading label="Apriamo la busta…" />}
+      <Card.Body className="text-center">
+        {assignment.isPending && <Loading label="Apriamo la busta…" />}
         <ErrorAlert error={assignment.error} />
-        {revealed && receiver && (
-          <div className="d-flex gap-3 align-items-start">
+        {receiver && (
+          <div className="ss-reveal-content">
+            <div className="ss-reveal-sparkles" aria-hidden>
+              {Array.from({ length: 10 }, (_, i) => (
+                <span key={i} style={{ '--i': i } as CSSProperties} />
+              ))}
+            </div>
             <Gingerbread
               color={receiver.color}
               accessory={receiver.accessory}
-              size={56}
-              className="flex-shrink-0 mt-2"
+              size={92}
+              className="ss-reveal-omino"
             />
-            <div className="flex-grow-1">
-              <p className="h4 mb-1">{receiver.name}</p>
-              <p className="mb-3 text-body-secondary">
-                {receiver.bio || 'Nessuna bio, per ora: un piccolo mistero in più.'}
-              </p>
-              <Button variant="outline-light" size="sm" onClick={() => setRevealed(false)}>
-                Copri di nuovo
-              </Button>
-            </div>
+            <p className="small text-body-secondary mb-0 mt-3">Farai il regalo a</p>
+            <p className="ss-reveal-name">{receiver.name}</p>
+            <p className="mb-3 text-body-secondary">
+              {receiver.bio || 'Nessuna bio, per ora: un piccolo mistero in più.'}
+            </p>
+            <Button variant="outline-light" size="sm" onClick={() => setRevealed(false)}>
+              Copri di nuovo
+            </Button>
           </div>
         )}
       </Card.Body>
