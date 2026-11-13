@@ -298,7 +298,12 @@ function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
         ))}
       </div>
 
-      <Modal show={open !== null} onHide={() => setOpenId(null)} centered>
+      <Modal
+        show={open !== null}
+        onHide={() => setOpenId(null)}
+        centered
+        dialogClassName="ss-profile-dialog"
+      >
         {open && (
           <Modal.Body className="ss-profile-view">
             <CloseButton className="ss-profile-close" aria-label="Chiudi" onClick={() => setOpenId(null)} />
