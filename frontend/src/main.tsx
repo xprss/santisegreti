@@ -1,5 +1,6 @@
 import '@fontsource-variable/fraunces/full.css'
 import '@fontsource-variable/nunito'
+import '@fontsource/henny-penny'
 import './theme/theme.scss'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
