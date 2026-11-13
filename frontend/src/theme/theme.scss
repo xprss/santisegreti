@@ -131,34 +131,75 @@ body {
 
 // Menu con il bastoncino di zucchero al posto dell'hamburger.
 .ss-menu-toggle {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   padding: 0;
-  border-radius: 50%;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  border-radius: 0.6rem;
+  background: $ss-cream;
+  box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
+  transform: rotate(4deg);
+  transition: transform 0.2s ease;
 
   &::after {
     display: none;
   }
 
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.45rem;
+    left: 50%;
+    width: 1.75rem;
+    height: 0.85rem;
+    margin-left: -0.875rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    transform: rotate(-5deg);
+  }
+
   &:hover,
   &:focus-visible,
   &.show {
-    background: rgba(255, 255, 255, 0.15);
-    transform: rotate(-12deg);
+    background: $ss-cream;
+    transform: rotate(-6deg) scale(1.05);
   }
 }
 
 .ss-menu {
   --bs-dropdown-link-active-bg: #{$ss-green};
-  min-width: 11rem;
-  border: 2px solid rgba($ss-gold, 0.6);
-  border-radius: $border-radius;
-  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
-  font-weight: 700;
+  --bs-dropdown-link-hover-bg: #{rgba($ss-gold, 0.25)};
+  min-width: 12rem;
+  margin-top: 0.75rem !important;
+  padding: 1rem 0.5rem 0.5rem;
+  border: 0;
+  border-radius: $border-radius-lg;
+  background: $ss-cream;
+  box-shadow: 0 0.35rem 0 rgba(0, 0, 0, 0.15), 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
+  // `rotate` e non `transform`: il posizionamento del menu usa già transform inline.
+  rotate: 1.5deg;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.45rem;
+    left: 50%;
+    width: 2.25rem;
+    height: 0.85rem;
+    margin-left: -1.125rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    transform: rotate(-5deg);
+  }
+
+  .dropdown-item {
+    border-radius: $border-radius-sm;
+    font-family: $headings-font-family;
+    font-size: 1.35rem;
+  }
 }
 
 // Il boa sotto la barra: metà sopra il rosso, metà sopra la pagina; il fiocco scende un po'.
@@ -178,11 +219,38 @@ body {
   transform: translateX(-50%);
 }
 
-.ss-brand {
+.ss-navbar .ss-brand {
+  position: relative;
+  padding: 0.15rem 0.85rem 0.1rem;
+  border-radius: 0.5rem;
+  background: $ss-cream;
+  color: $ss-red;
   font-family: $headings-font-family;
   font-weight: 400;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   letter-spacing: -0.01em;
+  box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
+  transform: rotate(-2.5deg);
+  transition: transform 0.2s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.45rem;
+    left: 50%;
+    width: 2.25rem;
+    height: 0.85rem;
+    margin-left: -1.125rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    transform: rotate(-5deg);
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: $ss-red-dark;
+    transform: rotate(0deg) scale(1.04);
+  }
 }
 
 .ss-page {
