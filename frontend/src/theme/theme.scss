@@ -831,10 +831,10 @@ body {
 }
 
 .ss-polaroid-name {
-  margin-top: 0.4rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  line-height: 1.2;
+  margin-top: 0.35rem;
+  font-family: $headings-font-family;
+  font-size: clamp(1.15rem, 5.2vw, 1.5rem);
+  line-height: 1.25;
   color: $ss-ink;
   text-align: center;
   overflow: hidden;

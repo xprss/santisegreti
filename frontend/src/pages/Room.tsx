@@ -1,6 +1,5 @@
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Badge, Card, CloseButton, Col, Container, Modal, Row } from 'react-bootstrap'
-import { accessoryLabel } from '../accessories/catalog'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../api/client'
@@ -314,11 +313,6 @@ function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
                 </Badge>
               )}
               {open.id === me.id && <Badge bg="secondary">sei tu</Badge>}
-              {open.accessory && (
-                <Badge bg="light" text="dark" className="border">
-                  {accessoryLabel(open.accessory)}
-                </Badge>
-              )}
             </div>
             <p className="ss-profile-bio">
               {open.bio || 'Nessuna bio, per ora: un piccolo mistero in più.'}
