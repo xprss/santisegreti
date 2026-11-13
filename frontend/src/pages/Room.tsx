@@ -32,7 +32,7 @@ export function Room() {
   const data = room.data
   return (
     <>
-      <div className="ss-scene">
+      <div className={data.is_admin ? 'ss-scene ss-scene--with-cta' : 'ss-scene'}>
         {canUseWebGL() ? (
           <Suspense fallback={<ParticipantsFallback participants={data.participants} meId={me.id} />}>
             <ChristmasScene participants={data.participants} meId={me.id} />
@@ -43,13 +43,15 @@ export function Room() {
 
         {/* Titolo e azioni sopra la scena: i tocchi fuori da qui arrivano al canvas. */}
         <Container className="ss-scene-header">
-          <h1 className="h2 mb-0 me-auto">{data.name}</h1>
-          {data.is_admin && (
-            <Link to={`/stanze/${data.id}/gestisci`} className="btn btn-outline-light btn-sm">
+          <h1 className="h2 mb-0">{data.name}</h1>
+        </Container>
+        {data.is_admin && (
+          <div className="ss-scene-cta">
+            <Link to={`/stanze/${data.id}/gestisci`} className="btn btn-warning">
               Gestisci la stanza
             </Link>
-          )}
-        </Container>
+          </div>
+        )}
       </div>
 
       <Container className="ss-page">

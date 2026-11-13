@@ -124,9 +124,7 @@ export default function ChristmasScene({ participants, meId }: Props) {
             <CloseButton aria-label="Chiudi" onClick={() => setSelectedId(null)} />
           )}
         </div>
-      ) : (
-        <p className="ss-scene-hint">Un tocco su un omino e scopri chi è</p>
-      )}
+      ) : null}
     </div>
   )
 }
