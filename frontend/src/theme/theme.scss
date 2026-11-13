@@ -138,34 +138,48 @@ body {
   width: 48px;
   height: 48px;
   padding: 0;
-  border-radius: 0.6rem;
-  background: $ss-cream;
-  box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
-  transform: rotate(4deg);
+  border: 0;
+  background: transparent;
+  transform: rotate(6deg);
   transition: transform 0.2s ease;
+
+  // Il bastoncino è un adesivo ritagliato…
+  svg {
+    width: 36px;
+    height: 36px;
+    filter:
+      drop-shadow(1.5px 0 0 #fffdf8)
+      drop-shadow(-1.5px 0 0 #fffdf8)
+      drop-shadow(0 1.5px 0 #fffdf8)
+      drop-shadow(0 -1.5px 0 #fffdf8)
+      drop-shadow(0 3px 0 rgba(0, 0, 0, 0.2));
+  }
+
+  // …con un pezzetto di scotch appiccicato sopra.
+  &::before {
+    content: '';
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    width: 2rem;
+    height: 0.8rem;
+    margin: -0.4rem 0 0 -1rem;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 2px;
+    transform: rotate(-28deg);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+    z-index: 1;
+  }
 
   &::after {
     display: none;
   }
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -0.45rem;
-    left: 50%;
-    width: 1.75rem;
-    height: 0.85rem;
-    margin-left: -0.875rem;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 2px;
-    transform: rotate(-5deg);
-  }
-
   &:hover,
   &:focus-visible,
   &.show {
-    background: $ss-cream;
-    transform: rotate(-6deg) scale(1.05);
+    background: transparent;
+    transform: rotate(-6deg) scale(1.08);
   }
 }
 
@@ -230,24 +244,26 @@ body {
 }
 
 .ss-navbar .ss-brand {
-  position: relative;
-  padding: 0.15rem 0.85rem 0.1rem;
-  border-radius: 0.5rem;
-  background: $ss-cream;
-  color: $ss-red;
+  // Timbro a inchiostro crema sul rosso, come "Estrazione fatta", con il font del titolo.
+  padding: 0 0.6rem 0.05rem;
+  border: 3px solid rgba($ss-cream, 0.92);
+  border-radius: 0.45rem;
+  outline: 1.5px solid rgba($ss-cream, 0.55);
+  outline-offset: 2px;
+  background: transparent;
+  color: rgba($ss-cream, 0.95);
   font-family: $headings-font-family;
   font-weight: 400;
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
-  box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
-  transform: rotate(-2.5deg);
+  font-size: 1.45rem;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  transform: rotate(-5deg);
   transition: transform 0.2s ease;
-
 
   &:hover,
   &:focus-visible {
-    color: $ss-red-dark;
-    transform: rotate(0deg) scale(1.04);
+    color: $ss-cream;
+    transform: rotate(-2deg) scale(1.04);
   }
 }
 
