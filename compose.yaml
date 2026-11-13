@@ -1,0 +1,13 @@
+# Produzione: docker compose up -d
+# Legge .env (vedi .env.example). MongoDB è esterno: MONGO_URI.
+name: santisegreti
+
+services:
+  app:
+    image: ${DOCKERHUB_USERNAME:?imposta DOCKERHUB_USERNAME nel .env}/santisegreti:${APP_VERSION:-latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DEV_LOGIN: "false"
+    ports:
+      - "${APP_PORT:-8000}:8000"

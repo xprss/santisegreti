@@ -1,0 +1,71 @@
+# Sviluppo locale: docker compose -f compose.dev.yaml up --watch
+name: santisegreti-dev
+
+services:
+  mongo:
+    image: mongo:8
+    command: ["mongod", "--quiet"]
+    attach: false # i log di Mongo restano fuori da `up`, si leggono con `logs mongo`
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: santisegreti
+      SESSION_SECRET: solo-per-sviluppo-locale-non-usare-in-produzione
+      COOKIE_SECURE: "false"
+      DEV_LOGIN: "true"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/app
+          target: /app/app
+        - action: sync
+          path: ./backend/scripts
+          target: /app/scripts
+        - action: rebuild
+          path: ./backend/uv.lock
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_PROXY: http://backend:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: sync
+          path: ./frontend/public
+          target: /app/public
+        - action: sync
+          path: ./frontend/index.html
+          target: /app/index.html
+        - action: rebuild
+          path: ./frontend/package-lock.json
+
+volumes:
+  mongo-data:
