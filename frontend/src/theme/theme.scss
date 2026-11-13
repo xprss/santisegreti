@@ -127,8 +127,13 @@ body {
   background: $ss-red;
   // Più alta, e con più spazio sotto: la ghirlanda copre ~16px del fondo, così nome e menu
   // restano centrati nella parte rossa visibile.
-  padding-top: calc(0.9rem + env(safe-area-inset-top));
-  padding-bottom: 1.65rem;
+  padding-top: calc(0.7rem + env(safe-area-inset-top));
+  padding-bottom: 1.4rem;
+
+  > .container {
+    position: relative;
+    justify-content: flex-end;
+  }
 }
 
 // Menu con il bastoncino di zucchero al posto dell'hamburger.
@@ -247,6 +252,12 @@ body {
 
 .ss-navbar .ss-brand {
   // Timbro a inchiostro crema sul rosso, come "Estrazione fatta", con il font del titolo.
+  // Al centro della barra (translate separato da transform, che serve per la rotazione).
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  margin: 0;
   padding: 0 0.6rem 0.05rem;
   border: 3px solid rgba($ss-cream, 0.92);
   border-radius: 0.45rem;
