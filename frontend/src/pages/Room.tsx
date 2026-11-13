@@ -1,5 +1,6 @@
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
-import { Badge, Card, Col, Container, ListGroup, Row } from 'react-bootstrap'
+import { Badge, Card, CloseButton, Col, Container, Modal, Row } from 'react-bootstrap'
+import { accessoryLabel } from '../accessories/catalog'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../api/client'
@@ -259,45 +260,75 @@ function DetailsCard({ room }: { room: RoomDetail }) {
   )
 }
 
+const TILTS = [-3, 2.5, -1.5, 3, -2.5, 1.5, -1, 2]
+
+/** Chi c'è nella stanza: una polaroid per omino, appese con lo scotch; un tocco apre il profilo. */
 function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
   const leave = useRemoveParticipant(room.id)
   const navigate = useNavigate()
   const canLeave = !room.is_admin && room.status === 'open'
+  const [openId, setOpenId] = useState<string | null>(null)
+  const open = room.participants.find((p) => p.id === openId) ?? null
 
   return (
-    <Card>
-      <Card.Body className="pb-2">
-        <h2 className="h5 mb-0">Chi c'è nella stanza</h2>
-        <p className="small text-body-secondary mb-0">
-          {plural(room.participants.length, 'persona', 'persone')}
-        </p>
-      </Card.Body>
-      <ListGroup variant="flush">
-        {room.participants.map((person) => (
-          <ListGroup.Item key={person.id} className="d-flex gap-3 align-items-start py-3">
-            <Gingerbread
-              color={person.color}
-              accessory={person.accessory}
-              size={36}
-              className="flex-shrink-0"
-            />
-            <div className="flex-grow-1 min-w-0">
-              <div className="d-flex flex-wrap align-items-center gap-2">
-                <span className="fw-semibold">{person.name}</span>
-                {person.id === room.admin_id && (
-                  <Badge bg="gold" text="dark">
-                    admin
-                  </Badge>
-                )}
-                {person.id === me.id && <span className="small text-body-secondary">(tu)</span>}
-              </div>
-              {person.bio && <p className="small text-body-secondary mb-0">{person.bio}</p>}
-            </div>
-          </ListGroup.Item>
+    <section aria-labelledby="people-title">
+      <h2 id="people-title" className="visually-hidden">
+        Chi c'è nella stanza: {plural(room.participants.length, 'persona', 'persone')}
+      </h2>
+      <div className="ss-polaroids">
+        {room.participants.map((person, i) => (
+          <button
+            key={person.id}
+            type="button"
+            className="ss-polaroid"
+            style={{ '--tilt': `${TILTS[i % TILTS.length]}deg` } as CSSProperties}
+            onClick={() => setOpenId(person.id)}
+            aria-label={`Profilo di ${person.name}`}
+          >
+            <span
+              className="ss-polaroid-photo"
+              style={{ '--tint': person.color } as CSSProperties}
+            >
+              <Gingerbread color={person.color} accessory={person.accessory} size={52} />
+              {person.id === room.admin_id && <span className="ss-polaroid-star">admin</span>}
+            </span>
+            <span className="ss-polaroid-name">
+              {person.id === me.id ? `${person.name} (tu)` : person.name}
+            </span>
+          </button>
         ))}
-      </ListGroup>
+      </div>
+
+      <Modal show={open !== null} onHide={() => setOpenId(null)} centered>
+        {open && (
+          <Modal.Body className="ss-profile-view">
+            <CloseButton className="ss-profile-close" aria-label="Chiudi" onClick={() => setOpenId(null)} />
+            <div className="ss-profile-photo" style={{ '--tint': open.color } as CSSProperties}>
+              <Gingerbread color={open.color} accessory={open.accessory} size={130} />
+            </div>
+            <h3 className="ss-profile-name">{open.name}</h3>
+            <div className="d-flex justify-content-center flex-wrap gap-2 mb-3">
+              {open.id === room.admin_id && (
+                <Badge bg="gold" text="dark">
+                  admin della stanza
+                </Badge>
+              )}
+              {open.id === me.id && <Badge bg="secondary">sei tu</Badge>}
+              {open.accessory && (
+                <Badge bg="light" text="dark" className="border">
+                  {accessoryLabel(open.accessory)}
+                </Badge>
+              )}
+            </div>
+            <p className="ss-profile-bio">
+              {open.bio || 'Nessuna bio, per ora: un piccolo mistero in più.'}
+            </p>
+          </Modal.Body>
+        )}
+      </Modal>
+
       {canLeave && (
-        <Card.Footer className="bg-transparent">
+        <div className="text-center mt-4">
           <Confirm
             title="Esci dalla stanza?"
             confirmLabel="Sì, esco"
@@ -305,16 +336,16 @@ function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
             onConfirm={() =>
               leave.mutateAsync(me.id).then(() => navigate('/', { replace: true }))
             }
-            trigger={(open) => (
-              <Button variant="link" className="px-0 text-danger" onClick={open}>
+            trigger={(show) => (
+              <Button variant="link" className="text-dark" onClick={show}>
                 Esci dalla stanza
               </Button>
             )}
           >
             Per rientrare servirà un nuovo codice di invito dall'admin.
           </Confirm>
-        </Card.Footer>
+        </div>
       )}
-    </Card>
+    </section>
   )
 }
