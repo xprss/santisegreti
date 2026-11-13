@@ -1,0 +1,39 @@
+[project]
+name = "santisegreti-backend"
+version = "0.1.0"
+description = "API di santisegreti.it"
+requires-python = ">=3.13"
+dependencies = [
+    "beanie>=2.2.0",
+    "fastapi>=0.162.7",
+    "google-auth>=2.62.2",
+    "pydantic-settings>=2.16.3",
+    "pyjwt>=2.15.1",
+    "requests>=2.34.2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "asgi-lifespan>=2.1.0",
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+    "ruff>=0.17.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
