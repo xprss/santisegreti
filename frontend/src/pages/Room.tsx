@@ -13,6 +13,18 @@ import { exchangeCountdown, formatDay, formatEuro, plural } from '../lib/format'
 
 const ChristmasScene = lazy(() => import('../scene/ChristmasScene'))
 
+/** Stelline che brillano sullo sfondo della rivelazione (posizioni fisse, ritmi diversi). */
+const STARS: CSSProperties[] = Array.from({ length: 28 }, (_, i) => {
+  const r = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1
+  return {
+    left: `${(r(1) * 96 + 2).toFixed(1)}%`,
+    top: `${(r(2) * 92 + 3).toFixed(1)}%`,
+    '--s': `${(0.35 + r(3) * 0.75).toFixed(2)}rem`,
+    '--d': `${(r(4) * 2.4).toFixed(2)}s`,
+    '--t': `${(1.4 + r(5) * 1.8).toFixed(2)}s`,
+  } as CSSProperties
+})
+
 export function Room() {
   const { id = '' } = useParams()
   const room = useRoom(id)
@@ -103,36 +115,52 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
     )
   }
 
+  if (!receiver) {
+    return (
+      <Card className="h-100 ss-reveal">
+        <Card.Body>
+          {assignment.isPending && <Loading label="Apriamo la busta…" />}
+          <ErrorAlert error={assignment.error} />
+        </Card.Body>
+      </Card>
+    )
+  }
+
+  // Il gran finale: busto dell'omino a sinistra, nome enorme che gli passa sopra, scintille ovunque.
+  const long = receiver.name.length > 9
   return (
-    <Card className="h-100 ss-reveal">
-      <Card.Body className="text-center">
-        {assignment.isPending && <Loading label="Apriamo la busta…" />}
-        <ErrorAlert error={assignment.error} />
-        {receiver && (
-          <div className="ss-reveal-content">
-            <div className="ss-reveal-sparkles" aria-hidden>
-              {Array.from({ length: 10 }, (_, i) => (
-                <span key={i} style={{ '--i': i } as CSSProperties} />
-              ))}
-            </div>
-            <Gingerbread
-              color={receiver.color}
-              accessory={receiver.accessory}
-              size={92}
-              className="ss-reveal-omino"
-            />
-            <p className="small text-body-secondary mb-0 mt-3">Farai il regalo a</p>
-            <p className="ss-reveal-name">{receiver.name}</p>
-            <p className="mb-3 text-body-secondary">
-              {receiver.bio || 'Nessuna bio, per ora: un piccolo mistero in più.'}
-            </p>
-            <Button variant="outline-light" size="sm" onClick={() => setRevealed(false)}>
-              Copri di nuovo
-            </Button>
-          </div>
-        )}
-      </Card.Body>
-    </Card>
+    <section className="ss-reveal-stage h-100" aria-live="polite">
+      <div className="ss-reveal-rays" aria-hidden />
+      <div className="ss-reveal-stars" aria-hidden>
+        {STARS.map((star, i) => (
+          <span key={i} style={star} />
+        ))}
+      </div>
+      <Gingerbread
+        color={receiver.color}
+        accessory={receiver.accessory}
+        size={250}
+        className="ss-reveal-omino"
+      />
+      <div className="ss-reveal-flash" aria-hidden />
+      <h2 className={long ? 'ss-reveal-name ss-reveal-name--long' : 'ss-reveal-name'}>
+        <span className="visually-hidden">Farai il regalo a </span>
+        {receiver.name}
+      </h2>
+      <div className="ss-reveal-burst" aria-hidden>
+        {Array.from({ length: 14 }, (_, i) => (
+          <span key={i} style={{ '--i': i } as CSSProperties} />
+        ))}
+      </div>
+      <Button
+        variant="outline-light"
+        size="sm"
+        className="ss-reveal-hide"
+        onClick={() => setRevealed(false)}
+      >
+        Copri di nuovo
+      </Button>
+    </section>
   )
 }
 

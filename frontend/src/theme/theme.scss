@@ -410,62 +410,193 @@ body {
   }
 }
 
-// Rivelazione: l'omino salta fuori, il nome si apre, scintille dorate tutto intorno.
-.ss-reveal-content {
+// Rivelazione: busto dell'omino a sinistra, nome enorme che gli passa sopra, scintille ovunque.
+.ss-reveal-stage {
   position: relative;
-  animation: ss-pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  min-height: 15rem;
+  overflow: hidden;
+  border-radius: $border-radius-lg;
+  border: 2px solid rgba($ss-gold, 0.8);
+  background:
+    radial-gradient(circle at 28% 45%, rgba(#ffd34d, 0.45) 0%, rgba(#ffd34d, 0) 45%),
+    radial-gradient(ellipse at 70% 120%, rgba($ss-red, 0.55) 0%, rgba($ss-red, 0) 60%),
+    linear-gradient(160deg, #1f5a37 0%, $ss-green-dark 60%, #0f2e1d 100%);
+  box-shadow: 0 0 2rem rgba(#ffd34d, 0.35), inset 0 0 2.5rem rgba(0, 0, 0, 0.35);
+  isolation: isolate;
+}
+
+// Raggi dorati che girano lenti dietro l'omino.
+.ss-reveal-rays {
+  position: absolute;
+  left: 28%;
+  top: 45%;
+  width: 46rem;
+  height: 46rem;
+  margin: -23rem 0 0 -23rem;
+  background: repeating-conic-gradient(rgba(#ffe08a, 0.16) 0deg 7deg, transparent 7deg 20deg);
+  mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  animation: ss-rays 24s linear infinite, ss-fade-in 1.2s ease-out both;
+  z-index: -1;
+}
+
+.ss-reveal-stars span {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  background: #fff3c4;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  filter: drop-shadow(0 0 4px #ffd34d);
+  animation: ss-twinkle var(--t) ease-in-out var(--d) infinite both;
 }
 
 .ss-reveal-omino {
-  animation: ss-jump 0.8s cubic-bezier(0.3, 1.6, 0.5, 1) 0.1s both;
+  position: absolute;
+  left: -1.5rem;
+  top: 3.5rem;
+  filter: drop-shadow(0 0.75rem 1.5rem rgba(0, 0, 0, 0.45));
+  animation: ss-rise 0.9s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.ss-reveal-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 62% 48%, #fff 0%, rgba(#fff6d5, 0.8) 20%, transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  animation: ss-flash 0.9s ease-out 0.45s both;
 }
 
 .ss-reveal-name {
+  position: absolute;
+  right: 0.75rem;
+  left: 32%;
+  top: 50%;
+  margin: 0;
+  transform: translateY(-58%);
+  text-align: right;
   font-family: $headings-font-family;
-  font-size: clamp(2rem, 9vw, 2.75rem);
-  line-height: 1.1;
-  margin-bottom: 0.5rem;
-  color: #fff;
-  text-shadow: 0 0 20px rgba(#ffd34d, 0.6);
-  animation: ss-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 0.2s both;
+  font-size: clamp(3.5rem, 18vw, 6rem);
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+  background: linear-gradient(110deg, #fff6d5 0%, #ffd34d 25%, #ffffff 45%, #e0b53a 65%, #fff6d5 85%, #ffd34d 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 0.6rem rgba(#ffd34d, 0.75)) drop-shadow(0 0.25rem 0.35rem rgba(0, 0, 0, 0.55));
+  animation:
+    ss-slam 0.9s cubic-bezier(0.2, 1.25, 0.35, 1) 0.35s both,
+    ss-shine 3.5s linear 1.3s infinite;
+
+  &--long {
+    font-size: clamp(2.5rem, 12vw, 4.25rem);
+  }
 }
 
-.ss-reveal-sparkles {
+// Scoppio di stelline dal nome, al momento della rivelazione.
+.ss-reveal-burst {
   position: absolute;
-  top: 3rem;
-  left: 50%;
+  left: 66%;
+  top: 46%;
   pointer-events: none;
 
   span {
     position: absolute;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin: -0.35rem;
     background: #ffd34d;
     clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-    --angle: calc(var(--i) * 36deg);
-    animation: ss-sparkle 1.1s ease-out 0.15s both;
+    filter: drop-shadow(0 0 4px #fff3c4);
+    --angle: calc(var(--i) * 25.7deg);
+    animation: ss-sparkle 1.2s ease-out 0.55s both;
   }
 }
 
-@keyframes ss-pop {
+.ss-reveal-hide {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  backdrop-filter: blur(4px);
+  animation: ss-fade-in 0.6s ease-out 1.1s both;
+}
+
+@keyframes ss-rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ss-fade-in {
   from {
     opacity: 0;
-    transform: scale(0.6);
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
-@keyframes ss-jump {
+@keyframes ss-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.5) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(45deg);
+  }
+}
+
+@keyframes ss-rise {
   0% {
     opacity: 0;
-    transform: translateY(1.5rem) scale(0.4) rotate(-12deg);
+    transform: translateY(60%) scale(0.7) rotate(-8deg);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes ss-flash {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ss-slam {
+  0% {
+    opacity: 0;
+    transform: translateY(-58%) scale(2.8);
+    letter-spacing: 0.25em;
+    filter: blur(12px);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-58%) scale(0.94);
+    letter-spacing: 0;
+    filter: blur(0) drop-shadow(0 0 1.5rem rgba(#fff6d5, 1));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-58%) scale(1);
+    filter: drop-shadow(0 0 0.6rem rgba(#ffd34d, 0.75)) drop-shadow(0 0.25rem 0.35rem rgba(0, 0, 0, 0.55));
+  }
+}
+
+@keyframes ss-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
   }
 }
 
@@ -476,7 +607,7 @@ body {
   }
   100% {
     opacity: 0;
-    transform: rotate(var(--angle)) translateY(-5.5rem) scale(1.3);
+    transform: rotate(var(--angle)) translateY(-7rem) scale(1.4);
   }
 }
 
@@ -499,10 +630,22 @@ body {
   .ss-reveal-trigger,
   .ss-reveal-trigger::before,
   .ss-reveal-trigger-title,
-  .ss-reveal-content,
+  .ss-reveal-rays,
+  .ss-reveal-stars span,
   .ss-reveal-omino,
+  .ss-reveal-flash,
   .ss-reveal-name,
-  .ss-reveal-sparkles span {
+  .ss-reveal-burst span,
+  .ss-reveal-hide {
     animation: none;
+  }
+
+  .ss-reveal-name {
+    transform: translateY(-58%);
+  }
+
+  .ss-reveal-flash,
+  .ss-reveal-burst {
+    display: none;
   }
 }
