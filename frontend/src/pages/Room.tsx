@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Badge, Card, Col, Container, ListGroup, Row } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -127,7 +127,6 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
   }
 
   // Il gran finale: busto dell'omino a sinistra, nome enorme che gli passa sopra, scintille ovunque.
-  const long = receiver.name.length > 9
   return (
     <section className="ss-reveal-stage h-100" aria-live="polite">
       <div className="ss-reveal-rays" aria-hidden />
@@ -143,10 +142,7 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
         className="ss-reveal-omino"
       />
       <div className="ss-reveal-flash" aria-hidden />
-      <h2 className={long ? 'ss-reveal-name ss-reveal-name--long' : 'ss-reveal-name'}>
-        <span className="visually-hidden">Farai il regalo a </span>
-        {receiver.name}
-      </h2>
+      <RevealName name={receiver.name} />
       <div className="ss-reveal-burst" aria-hidden>
         {Array.from({ length: 14 }, (_, i) => (
           <span key={i} style={{ '--i': i } as CSSProperties} />
@@ -161,6 +157,49 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
         Copri di nuovo
       </Button>
     </section>
+  )
+}
+
+/**
+ * Il nome più grande possibile: parte da un corpo enorme e scende finché non sta nel suo spazio
+ * (quasi tutta la larghezza, sopra l'omino, senza spezzare le parole).
+ */
+function RevealName({ name }: { name: string }) {
+  const ref = useRef<HTMLHeadingElement>(null)
+  const [size, setSize] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const element = ref.current
+    const stage = element?.parentElement
+    if (!element || !stage) return
+    const fit = () => {
+      const maxHeight = stage.clientHeight * 0.72
+      let px = Math.min(112, stage.clientWidth * 0.26)
+      element.style.setProperty('--ss-name-size', `${px}px`)
+      while (
+        px > 22 &&
+        (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > maxHeight)
+      ) {
+        px *= 0.92
+        element.style.setProperty('--ss-name-size', `${px}px`)
+      }
+      setSize(px)
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(stage)
+    return () => observer.disconnect()
+  }, [name])
+
+  return (
+    <h2
+      ref={ref}
+      className="ss-reveal-name"
+      style={size ? ({ '--ss-name-size': `${size}px` } as CSSProperties) : undefined}
+    >
+      <span className="visually-hidden">Farai il regalo a </span>
+      {name}
+    </h2>
   )
 }
 
