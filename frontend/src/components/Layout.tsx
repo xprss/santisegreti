@@ -17,7 +17,7 @@ export function Layout() {
         <Navbar variant="dark" className="ss-navbar">
           <Container>
             <Navbar.Brand as={Link} to="/" className="ss-brand">
-              santisegreti
+              Santi Segreti
             </Navbar.Brand>
             {me.data && (
               <Dropdown align="end">
