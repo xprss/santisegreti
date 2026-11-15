@@ -23,13 +23,27 @@ const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3)
 interface Props {
   participants: UserPublic[]
   meId: string
+  /** Falso nella pagina di accesso: gli omini fanno solo scena. */
+  interactive?: boolean
+  /** Pixel in basso coperti da altro (il pannello di accesso): l'inquadratura li evita. */
+  bottomInset?: number
 }
 
 /**
  * Camera che gira piano attorno all'albero e si allontana quanto basta per far stare tutti.
  * All'apertura arriva dall'alto con una planata; il puntatore la sposta appena (parallasse).
  */
-function Rig({ radius, spinning, intro }: { radius: number; spinning: boolean; intro: boolean }) {
+function Rig({
+  radius,
+  spinning,
+  intro,
+  bottomInset,
+}: {
+  radius: number
+  spinning: boolean
+  intro: boolean
+  bottomInset: number
+}) {
   const camera = useThree((state) => state.camera)
   const size = useThree((state) => state.size)
   const angle = useRef(0)
@@ -55,7 +69,10 @@ function Rig({ radius, spinning, intro }: { radius: number; spinning: boolean; i
       1.1 + distance * Math.sin(elevation),
       Math.cos(theta) * distance * Math.cos(elevation),
     )
-    camera.lookAt(0, TREE_TOP * 0.45 + lookAtLift(radius, aspect) + (1 - p) * 1.2, 0)
+    // Se in basso c'è qualcosa sopra la scena (il pannello di accesso), l'inquadratura sale
+    // di metà di quello spazio: albero e omini restano nella parte libera.
+    const inset = (bottomInset / Math.max(size.height, 1)) * 0.5 * distance * 2 * Math.tan(MathUtils.degToRad(FOV / 2))
+    camera.lookAt(0, TREE_TOP * 0.45 + lookAtLift(radius, aspect) - inset + (1 - p) * 1.2, 0)
   })
   return null
 }
@@ -100,7 +117,12 @@ function useOnScreen<T extends Element>(ref: React.RefObject<T | null>) {
   return visible
 }
 
-export default function ChristmasScene({ participants, meId }: Props) {
+export default function ChristmasScene({
+  participants,
+  meId,
+  interactive = true,
+  bottomInset = 0,
+}: Props) {
   const container = useRef<HTMLDivElement>(null)
   const visible = useOnScreen(container)
   const [reduced] = useState(prefersReducedMotion)
@@ -161,7 +183,12 @@ export default function ChristmasScene({ participants, meId }: Props) {
         <ambientLight intensity={0.18} color="#ffe2bd" />
         <Reflections />
 
-        <Rig radius={radius} spinning={animate && selectedId === null} intro={animate} />
+        <Rig
+          radius={radius}
+          spinning={animate && selectedId === null}
+          intro={animate}
+          bottomInset={bottomInset}
+        />
         <Sky animate={animate} rich={rich} />
         <Scenery radius={radius} rich={rich} animate={animate} />
         <Ground radius={radius} animate={animate} rich={rich} />
@@ -184,6 +211,7 @@ export default function ChristmasScene({ participants, meId }: Props) {
           highlightedId={shownId}
           onSelect={setSelectedId}
           onHover={setHoveredId}
+          interactive={interactive}
         />
         <Snow count={rich ? 900 : 500} animate={animate} />
 

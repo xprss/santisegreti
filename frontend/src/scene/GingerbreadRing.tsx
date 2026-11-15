@@ -69,6 +69,8 @@ interface Props {
   highlightedId: string | null
   onSelect: (id: string | null) => void
   onHover: (id: string | null) => void
+  /** Se falso gli omini sono solo decorativi: niente puntatore né scheda. */
+  interactive?: boolean
 }
 
 export function GingerbreadRing({
@@ -79,6 +81,7 @@ export function GingerbreadRing({
   highlightedId,
   onSelect,
   onHover,
+  interactive = true,
 }: Props) {
   const geometries = useMemo(() => buildGeometries(), [])
   const radius = ringRadius(participants.length)
@@ -105,6 +108,7 @@ export function GingerbreadRing({
             highlighted={highlightedId === person.id}
             onHover={(over) => onHover(over ? person.id : null)}
             onSelect={() => onSelect(selectedId === person.id ? null : person.id)}
+            interactive={interactive}
           />
         )
       })}
@@ -122,6 +126,7 @@ interface CookieProps {
   highlighted: boolean
   onHover: (over: boolean) => void
   onSelect: () => void
+  interactive: boolean
 }
 
 function Cookie({
@@ -134,6 +139,7 @@ function Cookie({
   highlighted,
   onHover,
   onSelect,
+  interactive,
 }: CookieProps) {
   const body = useRef<Group>(null)
   const color = useMemo(() => new Color(person.color), [person.color])
@@ -189,7 +195,7 @@ function Cookie({
           />
         </mesh>
       )}
-      <group ref={body} {...pointer}>
+      <group ref={body} {...(interactive ? pointer : {})}>
         <mesh geometry={geometries.cookie} castShadow receiveShadow>
           <meshStandardMaterial color={color} roughness={0.72} />
         </mesh>
