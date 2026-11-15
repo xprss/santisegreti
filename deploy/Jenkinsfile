@@ -1,0 +1,66 @@
+// Job Jenkins `santisegreti-deploy`: deploya in produzione un'immagine già
+// pubblicata su Docker Hub, per digest. Lo avvia GitHub Actions dopo ogni push
+// su main; a mano serve per tornare a una versione precedente (basta il digest).
+pipeline {
+  agent any
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    disableConcurrentBuilds()
+    timeout(time: 15, unit: 'MINUTES')
+  }
+
+  parameters {
+    string(name: 'IMAGE_REPOSITORY', defaultValue: 'xprss/santisegreti', description: 'Repository Docker Hub (namespace/nome)')
+    string(name: 'IMAGE_DIGEST', defaultValue: '', description: 'Digest immutabile sha256:...')
+    // Non GIT_COMMIT: Jenkins lo sovrascrive con lo SHA del proprio checkout.
+    string(name: 'DEPLOY_GIT_COMMIT', defaultValue: '', description: 'SHA completo del commit da cui è costruita l\'immagine')
+    string(name: 'APP_VERSION', defaultValue: '', description: 'Versione (dal file VERSION)')
+    string(name: 'GITHUB_RUN_URL', defaultValue: '', description: 'Run di GitHub Actions (facoltativo)')
+  }
+
+  environment {
+    ENV_FILE = '/etc/santisegreti/production.env'
+    PUBLIC_URL = 'https://santisegreti.hexaquot.it'
+  }
+
+  stages {
+    stage('Deploy') {
+      steps {
+        lock(resource: 'santisegreti-production') {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+            rm -rf deployment.json deployment-diagnostics
+            DIAGNOSTICS_DIR="${WORKSPACE}/deployment-diagnostics" \
+              deploy/deploy-image.sh \
+                --image-ref "${IMAGE_REPOSITORY}@${IMAGE_DIGEST}" \
+                --git-commit "${DEPLOY_GIT_COMMIT}" \
+                --app-version "${APP_VERSION}"
+
+            jq -n \
+              --arg imageRef "${IMAGE_REPOSITORY}@${IMAGE_DIGEST}" \
+              --arg gitCommit "${DEPLOY_GIT_COMMIT}" \
+              --arg appVersion "${APP_VERSION}" \
+              --arg githubRunUrl "${GITHUB_RUN_URL}" \
+              --arg deployedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              '{imageRef: $imageRef, gitCommit: $gitCommit, appVersion: $appVersion,
+                githubRunUrl: $githubRunUrl, deployedAt: $deployedAt}' > deployment.json
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      script {
+        def commit = params.DEPLOY_GIT_COMMIT ?: ''
+        currentBuild.description = "${params.APP_VERSION} · ${commit.length() > 7 ? commit.substring(0, 7) : commit}"
+      }
+      archiveArtifacts(artifacts: 'deployment.json', fingerprint: true)
+    }
+    always {
+      archiveArtifacts(artifacts: 'deployment-diagnostics/**', allowEmptyArchive: true)
+    }
+  }
+}

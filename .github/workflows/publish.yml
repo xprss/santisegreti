@@ -49,6 +49,10 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # I deploy si mettono in coda in ordine di push, senza annullarsi a vicenda.
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
 
@@ -66,6 +70,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v6
+        id: build
         with:
           context: .
           push: true
@@ -74,5 +79,51 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/santisegreti:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/santisegreti:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/santisegreti:sha-${{ steps.version.outputs.sha }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Jenkins (ci.hexaquot.it) deploya l'immagine per digest su santisegreti.hexaquot.it.
+      # Qui si mette solo in coda il build: l'esito si vede su Jenkins.
+      - name: Deploy in produzione via Jenkins
+        env:
+          JENKINS_URL: https://ci.hexaquot.it
+          JENKINS_JOB: santisegreti-deploy
+          JENKINS_TRIGGER_USER: ${{ secrets.JENKINS_TRIGGER_USER }}
+          JENKINS_TRIGGER_TOKEN: ${{ secrets.JENKINS_TRIGGER_TOKEN }}
+          IMAGE_REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}/santisegreti
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          DEPLOY_GIT_COMMIT: ${{ github.sha }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +x
+          [[ -n "${JENKINS_TRIGGER_USER}" && -n "${JENKINS_TRIGGER_TOKEN}" ]] || {
+            echo "Mancano i secrets JENKINS_TRIGGER_USER / JENKINS_TRIGGER_TOKEN" >&2; exit 1; }
+          [[ "${IMAGE_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "Digest dell'immagine non valido: ${IMAGE_DIGEST}" >&2; exit 1; }
+
+          response="${RUNNER_TEMP}/jenkins-response.txt"
+          status="$(curl --silent --show-error \
+            --connect-timeout 15 --max-time 60 \
+            --retry 3 --retry-all-errors --retry-delay 5 \
+            --output "${response}" --write-out '%{http_code}' \
+            --user "${JENKINS_TRIGGER_USER}:${JENKINS_TRIGGER_TOKEN}" \
+            --request POST \
+            --data-urlencode "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}" \
+            --data-urlencode "IMAGE_DIGEST=${IMAGE_DIGEST}" \
+            --data-urlencode "DEPLOY_GIT_COMMIT=${DEPLOY_GIT_COMMIT}" \
+            --data-urlencode "APP_VERSION=${APP_VERSION}" \
+            --data-urlencode "GITHUB_RUN_URL=${GITHUB_RUN_URL}" \
+            "${JENKINS_URL}/job/${JENKINS_JOB}/buildWithParameters")"
+
+          # 201 = build in coda. Un redirect (3xx) qui vorrebbe dire che il POST non è arrivato.
+          if [[ "${status}" != "201" ]]; then
+            echo "Jenkins non ha messo in coda il deploy (HTTP ${status})" >&2
+            head -c 4096 "${response}" >&2 || true
+            exit 1
+          fi
+          echo "Deploy di ${APP_VERSION} (${DEPLOY_GIT_COMMIT::7}) in coda su ${JENKINS_URL}/job/${JENKINS_JOB}/"

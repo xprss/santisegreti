@@ -59,20 +59,34 @@ cd frontend && npm ci && npm run lint && npm run build
 
 ## Produzione
 
-```bash
-cp .env.example .env   # MONGO_URI esterno, GOOGLE_CLIENT_ID, SESSION_SECRET, DOCKERHUB_USERNAME
-docker compose up -d
-```
+Gira su https://santisegreti.hexaquot.it (`www.` rimanda lì), sulla stessa macchina e con lo stesso Jenkins di hexaquot (https://ci.hexaquot.it). MongoDB è esterno.
 
-`compose.yaml` avvia solo l'app (porta `APP_PORT`, default 8000) con l'immagine `DOCKERHUB_USERNAME/santisegreti:APP_VERSION`. MongoDB è esterno (`MONGO_URI`) e HTTPS va gestito davanti all'app (reverse proxy, Cloudflare…), con `COOKIE_SECURE=true`.
+| Cosa | Dove |
+| --- | --- |
+| Container | `santisegreti`, in ascolto solo su `127.0.0.1:8085` |
+| Configurazione runtime | `/etc/santisegreti/production.env` (root:jenkins, 0640), vedi sotto |
+| Reverse proxy e TLS | `/etc/nginx/conf.d/santisegreti.hexaquot.it.conf` (copia in [`deploy/`](deploy/nginx-santisegreti.hexaquot.it.conf)), certificato Let's Encrypt via webroot |
+| Job Jenkins | `santisegreti-deploy`, pipeline [`deploy/Jenkinsfile`](deploy/Jenkinsfile) letta da `main` (config in [`deploy/jenkins-job.xml`](deploy/jenkins-job.xml)) |
 
-`SESSION_SECRET` deve avere almeno 32 caratteri: `openssl rand -hex 32`.
+`production.env` contiene `MONGO_URI`, `MONGO_DB`, `GOOGLE_CLIENT_ID` e `SESSION_SECRET` (almeno 32 caratteri: `openssl rand -hex 32`), una riga `KEY=valore` ciascuno e **senza virgolette** (lo legge `docker --env-file`). `DEV_LOGIN=false` e `COOKIE_SECURE=true` li forza lo script di deploy. Nella console Google, l'ID client deve avere `https://santisegreti.hexaquot.it` tra le origini JavaScript autorizzate.
+
+`compose.yaml` resta per chi vuole far girare l'immagine altrove: avvia solo l'app (porta `APP_PORT`, default 8000) con l'immagine `DOCKERHUB_USERNAME/santisegreti:APP_VERSION`; HTTPS va gestito davanti, con `COOKIE_SECURE=true`.
 
 ## Rilascio
 
 Il workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) parte a ogni push su `main`:
 
 1. lint e test di backend e frontend (con un MongoDB di servizio);
-2. build multi-architettura (amd64 e arm64) e push su Docker Hub con i tag `x.y.z` (dal file `VERSION`), `latest` e `sha-<commit>`.
+2. build multi-architettura (amd64 e arm64) e push su Docker Hub con i tag `x.y.z` (dal file `VERSION`), `latest` e `sha-<commit>`, e le etichette OCI `version` e `revision`;
+3. avvio del job Jenkins `santisegreti-deploy` con il **digest** dell'immagine appena pubblicata.
 
-Serve impostare nei **secrets del repository GitHub** `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN` (un access token di Docker Hub). Per una nuova versione si aggiorna `VERSION` e si fa push.
+Il job Jenkins ([`deploy/deploy-image.sh`](deploy/deploy-image.sh)) scarica l'immagine per digest, controlla che l'etichetta `revision` corrisponda al commit, sostituisce il container e aspetta che `/api/health` risponda: siccome all'avvio l'app crea gli indici su Mongo, una risposta vuol dire che anche il database è raggiungibile. Poi verifica l'URL pubblico. Se la nuova versione non parte, **rimette in piedi quella precedente** e il build fallisce, con log e stato del container tra gli artefatti.
+
+Secrets del repository GitHub:
+
+- `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`: utente e access token di Docker Hub;
+- `JENKINS_TRIGGER_USER`, `JENKINS_TRIGGER_TOKEN`: l'utente tecnico `github-actions` di Jenkins e il suo token API `santisegreti-delivery`, che può solo leggere e avviare `santisegreti-deploy`.
+
+Per una nuova versione si aggiorna `VERSION` e si fa push.
+
+**Tornare a una versione precedente:** su Jenkins, *santisegreti-deploy → Build with Parameters*, con il digest della versione voluta (si trova in `deployment.json` tra gli artefatti dei build passati, oppure su Docker Hub), il commit completo e la versione.
