@@ -3,6 +3,7 @@
 Il Secret Santa per amici, famiglie e colleghi: stanze segrete su invito, estrazione con regole di esclusione, e un albero di Natale in WebGL con tutti i partecipanti intorno.
 
 - **Frontend**: React + TypeScript (Vite), React Bootstrap, three.js con `@react-three/fiber`
+- **PWA**: installabile sulla home (manifest e service worker generati da `vite-plugin-pwa`); il service worker precarica la build ma non mette mai in cache `/api`
 - **Backend**: FastAPI, Beanie su MongoDB
 - **Deploy**: un'unica immagine Docker (FastAPI serve anche il frontend), pubblicata su Docker Hub da GitHub Actions
 
@@ -50,6 +51,10 @@ I test delle API usano un MongoDB reale su `localhost:27017` (quello di `compose
 ```bash
 cd frontend && npm ci && npm run lint && npm run build
 ```
+
+### PWA
+
+`vite-plugin-pwa` genera in build `manifest.webmanifest`, `sw.js` (Workbox) e `registerSW.js`. Le icone stanno in `frontend/public/` (`pwa-*.png`, `maskable-icon-512x512.png`, `apple-touch-icon-180x180.png`) e riprendono il cappello di `favicon.svg`. Il service worker si aggiorna da solo: dopo un deploy la versione nuova arriva alla navigazione successiva. Il backend serve i file fuori da `/assets` con `Cache-Control: no-cache`, così il browser ricontrolla sempre `sw.js` e il manifest. In sviluppo (`vite dev`) il service worker è spento; per provarlo: `npm run build && npm run preview`.
 
 ## Accesso con Google
 
