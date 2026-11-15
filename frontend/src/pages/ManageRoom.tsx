@@ -31,7 +31,7 @@ export function ManageRoom() {
   const data = room.data
   return (
     <Container className="ss-page ss-narrow">
-      <h1 className="h2 mb-4">{data.name}</h1>
+      <h1 className="visually-hidden">Gestisci {data.name}</h1>
       <Stack gap={3}>
         <InviteCard room={data} />
         <ParticipantsCard room={data} />
