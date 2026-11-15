@@ -45,6 +45,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     return app
 
 
+# Fuori da /assets i nomi non hanno hash (index.html, sw.js, manifest.webmanifest…):
+# il browser deve sempre ricontrollarli, altrimenti la PWA resta su una versione vecchia.
+_REVALIDATE = {"Cache-Control": "no-cache"}
+
+
 def _mount_frontend(app: FastAPI, static_dir: Path) -> None:
     """Serve la build del frontend e rimanda ogni rotta sconosciuta a index.html (SPA)."""
     root = static_dir.resolve()
@@ -58,5 +63,5 @@ def _mount_frontend(app: FastAPI, static_dir: Path) -> None:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
         candidate = (root / path).resolve()
         if path and candidate.is_file() and root in candidate.parents:
-            return FileResponse(candidate)
-        return FileResponse(root / "index.html", headers={"Cache-Control": "no-cache"})
+            return FileResponse(candidate, headers=_REVALIDATE)
+        return FileResponse(root / "index.html", headers=_REVALIDATE)
