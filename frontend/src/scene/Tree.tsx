@@ -4,6 +4,7 @@ import {
   AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
+  CatmullRomCurve3,
   Color,
   ExtrudeGeometry,
   Float32BufferAttribute,
@@ -12,9 +13,10 @@ import {
   Points,
   Shape,
   Sprite,
+  TubeGeometry,
   Vector3,
 } from 'three'
-import { glowTexture } from './glow'
+import { glowTexture, raysTexture } from './glow'
 import { seeded } from './random'
 
 /** Palchi dell'abete, dal basso: base, raggio, altezza, numero di punte. */
@@ -182,6 +184,22 @@ function buildLights() {
   return { positions, base, phases }
 }
 
+/** Festone dorato che gira attorno alla chioma e ricade un po' tra un ramo e l'altro. */
+function buildGarland(): TubeGeometry {
+  const points: Vector3[] = []
+  const turns = 3.2
+  const steps = 260
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    const height = 0.95 + t * (TREE_TOP - 1.7)
+    const angle = Math.PI * 0.7 + t * turns * Math.PI * 2
+    const sag = Math.pow(Math.abs(Math.sin(angle * 4.5)), 0.6) * 0.09
+    const radius = canopyRadius(height) + 0.09
+    points.push(new Vector3(Math.cos(angle) * radius, height - sag, Math.sin(angle) * radius))
+  }
+  return new TubeGeometry(new CatmullRomCurve3(points), 520, 0.028, 5)
+}
+
 function starShape(outer: number, inner: number): Shape {
   const shape = new Shape()
   for (let i = 0; i < 10; i++) {
@@ -219,6 +237,8 @@ export function Tree({ animate }: { animate: boolean }) {
   const glowPoints = useRef<Points>(null)
   const star = useRef<Object3D>(null)
   const halo = useRef<Sprite>(null)
+  const rays = useRef<Sprite>(null)
+  const garland = useMemo(() => buildGarland(), [])
 
   useLayoutEffect(() => {
     const mesh = baubleMesh.current
@@ -239,7 +259,7 @@ export function Tree({ animate }: { animate: boolean }) {
     if (!mesh) return
     for (let i = 0; i < LIGHT_COUNT; i++) {
       dummy.position.fromArray(lights.positions, i * 3)
-      dummy.scale.setScalar(0.042)
+      dummy.scale.setScalar(0.05)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
       mesh.setColorAt(i, lights.base[i])
@@ -263,37 +283,56 @@ export function Tree({ animate }: { animate: boolean }) {
     const mesh = lightMesh.current
     const colorAttr = glowGeometry.getAttribute('color') as BufferAttribute
     for (let i = 0; i < LIGHT_COUNT; i++) {
-      const pulse = 0.55 + 0.45 * Math.sin(t * 1.6 + lights.phases[i])
-      tmpColor.copy(lights.base[i]).multiplyScalar(0.6 + pulse * 0.7)
+      // Scintillio di ogni lucina più un'onda di luce che sale a spirale lungo il filo.
+      const twinkle = 0.55 + 0.45 * Math.sin(t * 1.6 + lights.phases[i])
+      const wave = Math.pow(Math.max(0, Math.sin(t * 1.4 - i * 0.12)), 10)
+      const pulse = twinkle + wave * 1.6
+      tmpColor.copy(lights.base[i]).multiplyScalar(0.8 + pulse * 0.9)
       mesh?.setColorAt(i, tmpColor)
-      tmpColor.copy(lights.base[i]).multiplyScalar(pulse * 0.55)
+      tmpColor.copy(lights.base[i]).multiplyScalar(pulse * 0.6)
       colorAttr.setXYZ(i, tmpColor.r, tmpColor.g, tmpColor.b)
     }
     if (mesh?.instanceColor) mesh.instanceColor.needsUpdate = true
     colorAttr.needsUpdate = true
 
     if (star.current) star.current.rotation.y = t * 0.5
-    if (halo.current) halo.current.scale.setScalar(1.7 + Math.sin(t * 1.3) * 0.12)
+    if (halo.current) halo.current.scale.setScalar(1.9 + Math.sin(t * 1.3) * 0.15)
+    if (rays.current) {
+      rays.current.material.rotation = t * 0.12
+      rays.current.scale.setScalar(3.4 + Math.sin(t * 0.9) * 0.35)
+    }
   })
 
   return (
     <group>
       {/* tronco */}
-      <mesh position={[0, 0.45, 0]}>
+      <mesh position={[0, 0.45, 0]} castShadow>
         <cylinderGeometry args={[0.24, 0.34, 0.9, 7]} />
         <meshStandardMaterial color="#5b3a22" roughness={0.95} flatShading />
       </mesh>
 
       {/* chioma */}
-      <mesh geometry={geometry}>
+      <mesh geometry={geometry} castShadow receiveShadow>
         <meshStandardMaterial vertexColors flatShading roughness={0.82} />
       </mesh>
 
       {/* palline */}
       <instancedMesh ref={baubleMesh} args={[undefined, undefined, baubles.length]}>
         <icosahedronGeometry args={[1, 2]} />
-        <meshStandardMaterial roughness={0.22} metalness={0.35} emissive="#2a1205" />
+        <meshStandardMaterial roughness={0.14} metalness={0.55} emissive="#2a1205" />
       </instancedMesh>
+
+      {/* festone dorato */}
+      <mesh geometry={garland}>
+        <meshStandardMaterial
+          color="#e8b64a"
+          metalness={0.85}
+          roughness={0.28}
+          emissive="#5a3a08"
+          emissiveIntensity={0.6}
+          flatShading
+        />
+      </mesh>
 
       {/* lucine: nucleo luminoso + alone additivo */}
       <instancedMesh ref={lightMesh} args={[undefined, undefined, LIGHT_COUNT]}>
@@ -303,7 +342,7 @@ export function Tree({ animate }: { animate: boolean }) {
       <points ref={glowPoints} geometry={glowGeometry}>
         <pointsMaterial
           map={glowTexture()}
-          size={0.6}
+          size={0.8}
           sizeAttenuation
           vertexColors
           transparent
@@ -319,13 +358,24 @@ export function Tree({ animate }: { animate: boolean }) {
           <meshStandardMaterial
             color="#ffd04a"
             emissive="#ffae00"
-            emissiveIntensity={1.4}
+            emissiveIntensity={2.2}
             metalness={0.5}
             roughness={0.3}
             toneMapped={false}
           />
         </mesh>
-        <sprite ref={halo} scale={1.7}>
+        <sprite ref={rays} scale={3.4}>
+          <spriteMaterial
+            map={raysTexture()}
+            color="#ffd27a"
+            transparent
+            opacity={0.55}
+            depthWrite={false}
+            blending={AdditiveBlending}
+            toneMapped={false}
+          />
+        </sprite>
+        <sprite ref={halo} scale={1.9}>
           <spriteMaterial
             map={glowTexture()}
             color="#ffcf6b"
