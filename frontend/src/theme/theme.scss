@@ -146,6 +146,9 @@ body {
   > .container {
     position: relative;
     justify-content: flex-end;
+    // Alta quanto il bastoncino del menu anche quando il menu non c'è (pagina di accesso):
+    // altrimenti la barra si schiaccia e il nome esce dal rosso.
+    min-height: 48px;
   }
 }
 
@@ -265,11 +268,11 @@ body {
 
 .ss-navbar .ss-brand {
   // Timbro a inchiostro crema sul rosso, come "Estrazione fatta", con il font del titolo.
-  // Al centro della barra (translate separato da transform, che serve per la rotazione).
+  // Al centro della barra. Centratura e rotazione nello stesso transform: la proprietà
+  // `translate` separata non c'è sui Safari meno recenti, e lì il nome finiva a destra.
   position: absolute;
   left: 50%;
   top: 50%;
-  translate: -50% -50%;
   margin: 0;
   padding: 0 0.6rem 0.05rem;
   border-radius: 0.45rem;
@@ -283,13 +286,13 @@ body {
   line-height: 1.2;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  transform: rotate(-5deg);
+  transform: translate(-50%, -50%) rotate(-5deg);
   transition: transform 0.2s ease;
 
   &:hover,
   &:focus-visible {
     color: $ss-cream;
-    transform: rotate(-2deg) scale(1.04);
+    transform: translate(-50%, -50%) rotate(-2deg) scale(1.04);
   }
 }
 
