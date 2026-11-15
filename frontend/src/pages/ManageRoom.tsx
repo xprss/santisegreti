@@ -31,9 +31,6 @@ export function ManageRoom() {
   const data = room.data
   return (
     <Container className="ss-page ss-narrow">
-      <Link to={`/stanze/${data.id}`} className="small d-inline-block mb-2">
-        ← Torna alla stanza
-      </Link>
       <h1 className="h2 mb-4">{data.name}</h1>
       <Stack gap={3}>
         <InviteCard room={data} />
