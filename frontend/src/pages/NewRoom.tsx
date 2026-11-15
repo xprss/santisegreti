@@ -10,7 +10,7 @@ export function NewRoom() {
 
   return (
     <Container className="ss-page ss-narrow">
-      <h1 className="h2 mb-4">Una nuova stanza segreta</h1>
+      <h1 className="visually-hidden">Una nuova stanza segreta</h1>
       <Card>
         <Card.Body>
           <ErrorAlert error={create.error} />
