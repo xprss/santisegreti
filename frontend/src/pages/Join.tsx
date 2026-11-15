@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Card, Container, Form, Spinner } from 'react-bootstrap'
 import { Button } from '../components/Button'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useRedeemInvite } from '../api/hooks'
 import { ErrorAlert } from '../components/feedback'
 
@@ -45,9 +45,6 @@ export function Join() {
 
   return (
     <Container className="ss-page ss-narrow">
-      <Link to="/" className="small d-inline-block mb-2">
-        ← Le tue stanze
-      </Link>
       <h1 className="h2 mb-2">Hai un codice di invito?</h1>
       <p className="text-body-secondary mb-4">
         È fatto di {CODE_LENGTH} caratteri e dura 3 minuti. Se nel frattempo è scaduto, l'admin
