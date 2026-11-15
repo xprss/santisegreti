@@ -119,7 +119,7 @@ export function Landing() {
 
         <div className="ss-hero-title">
           <Logo size={64} className="ss-hero-hat" />
-          <h1>santisegreti.it</h1>
+          <h1>Santi Segreti</h1>
           <p>Il Secret Santa senza bigliettini nel cappello</p>
         </div>
 
