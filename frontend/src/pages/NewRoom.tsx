@@ -10,10 +10,7 @@ export function NewRoom() {
 
   return (
     <Container className="ss-page ss-narrow">
-      <h1 className="h2 mb-2">Una nuova stanza segreta</h1>
-      <p className="text-body-secondary mb-4">
-        Dopo averla aperta potrai invitare le altre persone con un codice.
-      </p>
+      <h1 className="h2 mb-4">Una nuova stanza segreta</h1>
       <Card>
         <Card.Body>
           <ErrorAlert error={create.error} />
