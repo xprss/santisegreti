@@ -387,22 +387,17 @@ body {
   grid-column: 3;
   justify-self: end;
   pointer-events: auto;
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 50%;
   color: #fff;
-  background: rgba(8, 14, 28, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(6px);
-  transition: transform 0.3s ease, background-color 0.2s ease;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0.35rem;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+  transition: transform 0.3s ease;
 
   &:hover,
   &:focus-visible {
     color: #fff;
-    background: rgba(8, 14, 28, 0.7);
-    transform: rotate(45deg);
+    transform: rotate(60deg);
   }
 }
 

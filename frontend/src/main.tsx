@@ -1,6 +1,7 @@
 import '@fontsource/fuzzy-bubbles/400.css'
 import '@fontsource/fuzzy-bubbles/700.css'
 import '@fontsource/henny-penny'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 import './theme/theme.scss'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
