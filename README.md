@@ -82,6 +82,8 @@ Il workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml) par
 
 Il job Jenkins ([`deploy/deploy-image.sh`](deploy/deploy-image.sh)) scarica l'immagine per digest, controlla che l'etichetta `revision` corrisponda al commit, sostituisce il container e aspetta che `/api/health` risponda: siccome all'avvio l'app crea gli indici su Mongo, una risposta vuol dire che anche il database è raggiungibile. Poi verifica l'URL pubblico. Se la nuova versione non parte, **rimette in piedi quella precedente** e il build fallisce, con log e stato del container tra gli artefatti.
 
+Dopo un deploy riuscito, [`deploy/prune-images.sh`](deploy/prune-images.sh) cancella le immagini locali di `xprss/santisegreti` che non servono più. Tiene le ultime 3 deployate con successo (quella attuale e due a cui tornare senza riscaricarle; `KEEP_IMAGES` per cambiarlo) e qualsiasi immagine usata da un container. Lo storico dei deploy riusciti sta in `/var/lib/jenkins/santisegreti/deploy-history`. Le altre immagini dell'host non le tocca. Si può lanciare anche a mano: `sudo -u jenkins deploy/prune-images.sh --dry-run`.
+
 Secrets del repository GitHub:
 
 - `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`: utente e access token di Docker Hub;
@@ -89,4 +91,4 @@ Secrets del repository GitHub:
 
 Per una nuova versione si aggiorna `VERSION` e si fa push.
 
-**Tornare a una versione precedente:** su Jenkins, *santisegreti-deploy → Build with Parameters*, con il digest della versione voluta (si trova in `deployment.json` tra gli artefatti dei build passati, oppure su Docker Hub), il commit completo e la versione.
+**Tornare a una versione precedente:** su Jenkins, *santisegreti-deploy → Build with Parameters*, con il digest della versione voluta (si trova in `deployment.json` tra gli artefatti dei build passati, oppure su Docker Hub), il commit completo e la versione. Se l'immagine è già stata cancellata dall'host, il deploy la riscarica da Docker Hub.

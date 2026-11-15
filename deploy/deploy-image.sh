@@ -8,10 +8,11 @@
 #     --app-version 0.1.0
 #
 # Variabili opzionali: ENV_FILE, CONTAINER_NAME, HOST_PORT, APP_MEMORY,
-# APP_MEMORY_SWAP, DIAGNOSTICS_DIR, PUBLIC_URL.
+# APP_MEMORY_SWAP, DIAGNOSTICS_DIR, PUBLIC_URL, HISTORY_FILE, KEEP_IMAGES.
 #
 # Se il nuovo container non diventa sano, il precedente viene riavviato
-# e lo script esce con errore.
+# e lo script esce con errore. Dopo un deploy riuscito cancella le immagini
+# vecchie con deploy/prune-images.sh, tenendo le ultime KEEP_IMAGES (default 3).
 
 set -euo pipefail
 
@@ -23,12 +24,16 @@ APP_MEMORY="${APP_MEMORY:-256m}"
 APP_MEMORY_SWAP="${APP_MEMORY_SWAP:-384m}"
 DIAGNOSTICS_DIR="${DIAGNOSTICS_DIR:-$(pwd)/deployment-diagnostics}"
 PUBLIC_URL="${PUBLIC_URL:-}"
+# Storico dei deploy riusciti e quante immagini tenere in locale (vedi prune-images.sh).
+HISTORY_FILE="${HISTORY_FILE:-/var/lib/jenkins/santisegreti/deploy-history}"
+KEEP_IMAGES="${KEEP_IMAGES:-3}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 IMAGE_REF=""
 GIT_COMMIT=""
 APP_VERSION=""
 
-usage() { sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -162,3 +167,11 @@ fi
 
 capture_diagnostics
 echo "Deploy completato: ${APP_VERSION} (${GIT_COMMIT}) da ${IMAGE_REF}"
+
+# --- Pulizia delle immagini vecchie ----------------------------------------------
+# Lo storico registra solo i deploy riusciti; la pulizia non fa mai fallire il deploy.
+mkdir -p "$(dirname "${HISTORY_FILE}")"
+printf '%s %s %s %s\n' "${IMAGE_REF}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${APP_VERSION}" "${GIT_COMMIT}" >> "${HISTORY_FILE}"
+IMAGE_REPOSITORY="${IMAGE_REF%@*}" HISTORY_FILE="${HISTORY_FILE}" \
+  "${SCRIPT_DIR}/prune-images.sh" --keep "${KEEP_IMAGES}" \
+  || echo "ATTENZIONE: pulizia delle immagini non riuscita" >&2
