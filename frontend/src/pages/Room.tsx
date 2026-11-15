@@ -1,4 +1,4 @@
-import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Badge, Card, CloseButton, Col, Container, Modal, Row } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -25,10 +25,33 @@ const STARS: CSSProperties[] = Array.from({ length: 28 }, (_, i) => {
   } as CSSProperties
 })
 
+function GearIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M10.3 2h3.4l.5 2.6a7.8 7.8 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.7a7.9 7.9 0 0 1 0 2.2l2 1.7-1.7 2.9-2.5-.9a7.8 7.8 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.8 7.8 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.7a7.9 7.9 0 0 1 0-2.2l-2-1.7 1.7-2.9 2.5.9a7.8 7.8 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"
+      />
+    </svg>
+  )
+}
+
+/** Finché la stanza è aperta, lo scroll della pagina si aggancia alla scena (solo sul telefono, via CSS). */
+function useSceneSnap() {
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('ss-snap')
+    return () => root.classList.remove('ss-snap')
+  }, [])
+}
+
 export function Room() {
   const { id = '' } = useParams()
   const room = useRoom(id)
   const me = useMe().data as Me
+  const content = useRef<HTMLDivElement>(null)
+  useSceneSnap()
 
   if (room.isPending) return <Loading />
   if (room.isError) {
@@ -44,7 +67,7 @@ export function Room() {
   const data = room.data
   return (
     <>
-      <div className={data.is_admin ? 'ss-scene ss-scene--with-cta' : 'ss-scene'}>
+      <div className="ss-scene">
         {canUseWebGL() ? (
           <Suspense fallback={<ParticipantsFallback participants={data.participants} meId={me.id} />}>
             <ChristmasScene participants={data.participants} meId={me.id} />
@@ -56,17 +79,32 @@ export function Room() {
         {/* Titolo e azioni sopra la scena: i tocchi fuori da qui arrivano al canvas. */}
         <Container className="ss-scene-header">
           <h1 className="h2 mb-0">{data.name}</h1>
-        </Container>
-        {data.is_admin && (
-          <div className="ss-scene-cta">
-            <Link to={`/stanze/${data.id}/gestisci`} className="btn btn-warning">
-              Gestisci la stanza
+          {data.is_admin && (
+            <Link
+              to={`/stanze/${data.id}/gestisci`}
+              className="ss-scene-gear"
+              aria-label="Gestisci la stanza"
+              title="Gestisci la stanza"
+            >
+              <GearIcon />
             </Link>
-          </div>
-        )}
+          )}
+        </Container>
+
+        {/* Sul telefono la scena riempie lo schermo: in fondo, l'invito a scendere. */}
+        <button
+          type="button"
+          className="ss-scene-scroll"
+          onClick={() => content.current?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          <span>Scorri</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+            <path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       </div>
 
-      <Container className="ss-page">
+      <Container ref={content} className="ss-page ss-snap-start">
         <Row className="g-3">
           <Col xs={12} lg={6}>
             <AssignmentCard room={data} />

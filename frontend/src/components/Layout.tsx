@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { Container, Dropdown, Navbar } from 'react-bootstrap'
 import { Link, Outlet, ScrollRestoration, useNavigate } from 'react-router'
 import { useLogout, useMe } from '../api/hooks'
@@ -6,14 +7,40 @@ import { ErrorAlert, Loading } from './feedback'
 import { CandyCane } from './CandyCane'
 import { Garland } from './Garland'
 
+/**
+ * Espone l'altezza dell'header come --ss-header-h: la scena e lo snap dello scroll la usano.
+ * Conta lo spazio che occupa davvero nella pagina (la ghirlanda sporge sotto con margine negativo),
+ * cioè dove comincia il <main> che lo segue.
+ */
+function useHeaderHeight() {
+  const header = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    const element = header.current
+    if (!element) return
+    const root = document.documentElement
+    const update = () => {
+      const next = element.nextElementSibling as HTMLElement | null
+      const height = next ? next.offsetTop : element.offsetHeight
+      root.style.setProperty('--ss-header-h', `${height}px`)
+    }
+    update()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  return header
+}
+
 export function Layout() {
+  const header = useHeaderHeight()
   const me = useMe()
   const logout = useLogout()
   const navigate = useNavigate()
 
   return (
     <>
-      <header className="sticky-top">
+      <header ref={header} className="sticky-top">
         <Navbar variant="dark" className="ss-navbar">
           <Container>
             <Navbar.Brand as={Link} to="/" className="ss-brand">

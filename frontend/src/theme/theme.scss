@@ -109,6 +109,19 @@ body {
   --bs-link-hover-color-rgb: #{to-rgb($ss-green-dark)};
 }
 
+// Pagina della stanza sul telefono: la scena fa da calamita. Lo scroll si ferma o con la scena
+// a tutto schermo o all'inizio dei contenuti; da lì in giù si scorre liberamente.
+@include media-breakpoint-down(md) {
+  html.ss-snap {
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: var(--ss-header-h, 0px);
+  }
+
+  .ss-snap-start {
+    scroll-snap-align: start;
+  }
+}
+
 // …dentro schede, modali ed elenchi tornano rossi.
 .card,
 .modal-content,
@@ -304,35 +317,38 @@ body {
   }
 }
 
-// La scena dell'albero: verticale sul telefono, più larga da tablet in su.
+// La scena dell'albero. Sul telefono riempie tutto lo schermo sotto l'header (alto
+// --ss-header-h, misurato in Layout); da tablet in su torna un riquadro 16:9.
 .ss-scene {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
-  max-height: 72dvh;
+  height: calc(100dvh - var(--ss-header-h, 0px));
   background: radial-gradient(ellipse at 50% 35%, #1d3a4f 0%, #0d1b2a 70%);
   overflow: hidden;
   touch-action: pan-y;
+  scroll-snap-align: start;
 
   @include media-breakpoint-up(md) {
+    height: auto;
     aspect-ratio: 16 / 9;
-  }
+    max-height: 72dvh;
+    scroll-snap-align: none;
 
-  // Il fondo della scena sfuma nel colore della pagina: nessuno stacco netto.
-  &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 22%;
-    background: linear-gradient(to bottom, rgba($ss-grinch, 0), rgba($ss-grinch, 0.85) 70%, $ss-grinch);
-    pointer-events: none;
-    z-index: 1;
+    // Il fondo della scena sfuma nel colore della pagina: nessuno stacco netto.
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 22%;
+      background: linear-gradient(to bottom, rgba($ss-grinch, 0), rgba($ss-grinch, 0.85) 70%, $ss-grinch);
+      pointer-events: none;
+      z-index: 1;
+    }
   }
 
   .ss-scene-header,
-  .ss-scene-cta,
   .ss-scene-card {
     z-index: 2;
   }
@@ -344,11 +360,17 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  text-align: center;
   padding-top: 1.75rem;
   pointer-events: none;
+  // Nome al centro, ingranaggio dell'admin in fondo alla stessa riga.
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  column-gap: 0.5rem;
 
   h1 {
+    grid-column: 2;
+    text-align: center;
     color: #fff;
     font-weight: 700;
     font-size: calc(1.55rem + 1.2vw);
@@ -359,27 +381,90 @@ body {
 
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
   }
-
 }
 
-// CTA dell'admin appoggiata sul bordo inferiore della scena.
-.ss-scene-cta {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
+.ss-scene-gear {
+  grid-column: 3;
+  justify-self: end;
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(8, 14, 28, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  transition: transform 0.3s ease, background-color 0.2s ease;
 
-  .btn {
-    pointer-events: auto;
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    background: rgba(8, 14, 28, 0.7);
+    transform: rotate(45deg);
   }
 }
 
-// Con la CTA, la scheda dell'omino toccato sale sopra il bottone.
-.ss-scene--with-cta .ss-scene-card {
-  bottom: 4.5rem;
+// Invito a scorrere: sfumatura nera dal fondo, scritta e chevron che saltella. Solo sul telefono,
+// dove la scena riempie lo schermo; da tablet in su c'è la sfumatura verso la pagina.
+.ss-scene-scroll {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.1rem;
+  padding: 0 0 calc(0.75rem + env(safe-area-inset-bottom));
+  border: 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.45) 55%, rgba(0, 0, 0, 0.8));
+  // La sfumatura non deve rubare i tocchi agli omini: cliccabile solo vicino alla scritta.
+  pointer-events: none;
+  z-index: 1;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  svg {
+    animation: ss-nudge 1.6s ease-in-out infinite;
+  }
+
+  @include media-breakpoint-up(md) {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      animation: none;
+    }
+  }
+}
+
+@keyframes ss-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+// Sul telefono la scheda dell'omino toccato sta sopra l'invito a scorrere.
+.ss-scene .ss-scene-card {
+  @include media-breakpoint-down(md) {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
 }
 
 .ss-scene-card {
