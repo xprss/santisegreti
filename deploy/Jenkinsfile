@@ -25,6 +25,20 @@ pipeline {
   }
 
   stages {
+    stage('Validate') {
+      steps {
+        script {
+          // Jenkins non esporta i parametri vuoti come variabili d'ambiente:
+          // senza questo controllo lo shell fallirebbe con "unbound variable".
+          ['IMAGE_REPOSITORY', 'IMAGE_DIGEST', 'DEPLOY_GIT_COMMIT', 'APP_VERSION'].each { name ->
+            if (!params[name]?.trim()) {
+              error("Parametro mancante: ${name}")
+            }
+          }
+        }
+      }
+    }
+
     stage('Deploy') {
       steps {
         lock(resource: 'santisegreti-production') {
@@ -41,7 +55,7 @@ pipeline {
               --arg imageRef "${IMAGE_REPOSITORY}@${IMAGE_DIGEST}" \
               --arg gitCommit "${DEPLOY_GIT_COMMIT}" \
               --arg appVersion "${APP_VERSION}" \
-              --arg githubRunUrl "${GITHUB_RUN_URL}" \
+              --arg githubRunUrl "${GITHUB_RUN_URL:-}" \
               --arg deployedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
               '{imageRef: $imageRef, gitCommit: $gitCommit, appVersion: $appVersion,
                 githubRunUrl: $githubRunUrl, deployedAt: $deployedAt}' > deployment.json
