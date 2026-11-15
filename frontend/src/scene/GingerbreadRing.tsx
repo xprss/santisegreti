@@ -190,7 +190,7 @@ function Cookie({
         </mesh>
       )}
       <group ref={body} {...pointer}>
-        <mesh geometry={geometries.cookie}>
+        <mesh geometry={geometries.cookie} castShadow receiveShadow>
           <meshStandardMaterial color={color} roughness={0.72} />
         </mesh>
         <mesh geometry={geometries.icing}>
