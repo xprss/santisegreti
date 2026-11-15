@@ -13,6 +13,7 @@ import {
 } from 'three'
 import { glowTexture } from './glow'
 import { seeded } from './random'
+import { SantaSleigh } from './SantaSleigh'
 
 export const HORIZON = '#1c3554'
 const ZENITH = '#03060f'
@@ -321,6 +322,7 @@ export function Sky({ animate, rich }: { animate: boolean; rich: boolean }) {
       <Aurora animate={animate} />
       <Moon />
       {animate && <ShootingStar />}
+      <SantaSleigh animate={animate} />
     </group>
   )
 }
