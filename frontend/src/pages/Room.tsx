@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Badge, Card, CloseButton, Col, Container, Modal, Row } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -7,6 +7,8 @@ import { useMe, useMyAssignment, useRemoveParticipant, useRoom } from '../api/ho
 import type { Me, RoomDetail } from '../api/types'
 import { Confirm, ErrorAlert, Loading } from '../components/feedback'
 import { Gingerbread } from '../components/Gingerbread'
+import { ScrollHint } from '../components/ScrollHint'
+import { useSceneSnap } from '../lib/useSceneSnap'
 import { ParticipantsFallback } from '../scene/ParticipantsFallback'
 import { canUseWebGL } from '../scene/webgl'
 import { daysUntil, formatEuro, parseDay, plural } from '../lib/format'
@@ -24,15 +26,6 @@ const STARS: CSSProperties[] = Array.from({ length: 28 }, (_, i) => {
     '--t': `${(1.4 + r(5) * 1.8).toFixed(2)}s`,
   } as CSSProperties
 })
-
-/** Finché la stanza è aperta, lo scroll della pagina si aggancia alla scena (solo sul telefono, via CSS). */
-function useSceneSnap() {
-  useEffect(() => {
-    const root = document.documentElement
-    root.classList.add('ss-snap')
-    return () => root.classList.remove('ss-snap')
-  }, [])
-}
 
 export function Room() {
   const { id = '' } = useParams()
@@ -80,16 +73,10 @@ export function Room() {
         </Container>
 
         {/* Sul telefono la scena riempie lo schermo: in fondo, l'invito a scendere. */}
-        <button
-          type="button"
-          className="ss-scene-scroll"
+        <ScrollHint
+          label="Scorri"
           onClick={() => content.current?.scrollIntoView({ behavior: 'smooth' })}
-        >
-          <span>Scorri</span>
-          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
-            <path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        />
       </div>
 
       <Container ref={content} className="ss-page ss-snap-start">
