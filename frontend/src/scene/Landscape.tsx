@@ -20,6 +20,33 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { glowTexture } from './glow'
 import { seeded } from './random'
+import { Reindeer, type ReindeerPose } from './Reindeer'
+import { Snowman, type SnowmanLook } from './Snowman'
+
+/** Pupazzi di neve sparsi ai margini del bosco, ognuno con la sua sciarpa e il suo cappello. */
+const SNOWMEN: ({ angle: number; distance: number; size: number } & SnowmanLook)[] = [
+  { angle: 0.3, distance: 20.5, size: 1.7, scarf: '#c81f2d', hat: 'top', hatColor: '#c81f2d' },
+  { angle: 1.6, distance: 21, size: 1.5, scarf: '#1e5b3a', hat: 'beanie', hatColor: '#c81f2d' },
+  { angle: 2.85, distance: 20.5, size: 1.8, scarf: '#2a4f8a', hat: 'top', hatColor: '#e8c04a' },
+  { angle: 4.05, distance: 21, size: 1.6, scarf: '#e8c04a', hat: 'beanie', hatColor: '#2a4f8a' },
+  { angle: 5.15, distance: 20.5, size: 1.55, scarf: '#c81f2d', hat: 'beanie', hatColor: '#1e5b3a' },
+]
+
+/** Due piccoli branchi di renne che brucano tra le casette. */
+const HERD: { angle: number; distance: number; heading: number; pose: ReindeerPose }[] = [
+  { angle: 1.22, distance: 20.5, heading: 0.4, pose: 'graze' },
+  { angle: 1.34, distance: 21.8, heading: 2.6, pose: 'stand' },
+  { angle: 1.1, distance: 22.2, heading: -1.2, pose: 'stand' },
+  { angle: 3.95, distance: 21, heading: 1.8, pose: 'stand' },
+  { angle: 4.1, distance: 20.3, heading: -0.6, pose: 'graze' },
+  { angle: 5.95, distance: 20.8, heading: 3.4, pose: 'stand' },
+]
+
+const polar = (angle: number, distance: number) =>
+  [Math.sin(angle) * distance, 0, Math.cos(angle) * distance] as const
+
+/** Radure nel bosco: lì non crescono abeti. */
+const CLEARINGS: { x: number; z: number; r: number }[] = []
 
 function paint(geometry: BufferGeometry, color: string): BufferGeometry {
   const g = geometry.index ? geometry.toNonIndexed() : geometry
@@ -119,6 +146,10 @@ const COTTAGES: Cottage[] = [
   { angle: 5.6, distance: 25, scale: 0.95 },
 ]
 
+for (const c of COTTAGES) CLEARINGS.push({ x: Math.sin(c.angle) * c.distance, z: Math.cos(c.angle) * c.distance, r: 3.2 })
+for (const s of SNOWMEN) CLEARINGS.push({ x: Math.sin(s.angle) * s.distance, z: Math.cos(s.angle) * s.distance, r: 1.6 })
+for (const d of HERD) CLEARINGS.push({ x: Math.sin(d.angle) * d.distance, z: Math.cos(d.angle) * d.distance, r: 1.8 })
+
 /** Casetta con il tetto innevato e le finestre accese. */
 function House({ angle, distance, scale }: Cottage) {
   const x = Math.sin(angle) * distance
@@ -180,7 +211,7 @@ function House({ angle, distance, scale }: Cottage) {
  * e bastoncini di zucchero giganti piantati tra gli alberi. Con tanti omini la camera si allontana,
  * e il paesaggio si allarga con lei (`scale`) per non finirle davanti.
  */
-export function Landscape({ rich, scale }: { rich: boolean; scale: number }) {
+export function Landscape({ rich, scale, animate }: { rich: boolean; scale: number; animate: boolean }) {
   const pine = useMemo(() => pineGeometry(), [])
   const forest = useRef<InstancedMesh>(null)
   const count = rich ? 150 : 90
@@ -226,10 +257,7 @@ export function Landscape({ rich, scale }: { rich: boolean; scale: number }) {
       const x = Math.sin(angle) * distance
       const z = Math.cos(angle) * distance
       // Lascia spazio attorno alle casette.
-      const nearHouse = COTTAGES.some(
-        (c) => Math.hypot(Math.sin(c.angle) * c.distance - x, Math.cos(c.angle) * c.distance - z) < 3.2,
-      )
-      if (nearHouse) continue
+      if (CLEARINGS.some((c) => Math.hypot(c.x - x, c.z - z) < c.r)) continue
       const s = 1.1 + rand() * 1.4 + (distance - 20) * 0.04
       dummy.position.set(x, 0, z)
       dummy.rotation.set(0, rand() * Math.PI, 0)
@@ -258,6 +286,18 @@ export function Landscape({ rich, scale }: { rich: boolean; scale: number }) {
 
       {COTTAGES.map((cottage, i) => (
         <House key={i} {...cottage} />
+      ))}
+
+      {SNOWMEN.map(({ angle, distance, size, ...look }, i) => (
+        <group key={i} position={polar(angle, distance)} rotation={[0, angle + Math.PI, 0]} scale={size}>
+          <Snowman {...look} />
+        </group>
+      ))}
+
+      {HERD.map((deer, i) => (
+        <group key={i} position={polar(deer.angle, deer.distance)} rotation={[0, deer.heading, 0]} scale={2}>
+          <Reindeer pose={deer.pose} animate={animate} phase={i * 2.3} />
+        </group>
       ))}
 
       {canes.map((c, i) => (

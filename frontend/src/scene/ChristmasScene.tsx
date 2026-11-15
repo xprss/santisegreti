@@ -64,14 +64,14 @@ function Rig({ radius, spinning, intro }: { radius: number; spinning: boolean; i
  * Nebbia e paesaggio seguono la camera: con un formato alto (telefono) o tanta gente
  * la camera si allontana, e bosco e foschia si allontanano con lei.
  */
-function Scenery({ radius, rich }: { radius: number; rich: boolean }) {
+function Scenery({ radius, rich, animate }: { radius: number; rich: boolean; animate: boolean }) {
   const size = useThree((state) => state.size)
   const aspect = size.width / Math.max(size.height, 1)
   const distance = cameraDistance(radius, aspect)
   return (
     <>
       <fog attach="fog" args={[HORIZON, distance + 4, distance + 46]} />
-      <Landscape rich={rich} scale={sceneryScale(radius, aspect)} />
+      <Landscape rich={rich} animate={animate} scale={sceneryScale(radius, aspect)} />
     </>
   )
 }
@@ -163,7 +163,7 @@ export default function ChristmasScene({ participants, meId }: Props) {
 
         <Rig radius={radius} spinning={animate && selectedId === null} intro={animate} />
         <Sky animate={animate} rich={rich} />
-        <Scenery radius={radius} rich={rich} />
+        <Scenery radius={radius} rich={rich} animate={animate} />
         <Ground radius={radius} animate={animate} rich={rich} />
         <Tree animate={animate} />
         <Sparkles
