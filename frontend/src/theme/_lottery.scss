@@ -7,6 +7,9 @@ $ss-ticket-blue: #bfe3f7;
 $ss-ticket-line: #8cc4e6;
 $ss-stamp-black: #1d1b1a;
 $ss-pixel-ink: #2b2b38;
+// Box dell'invito e biglietto alti uguali: quando il biglietto prende il posto del box, le
+// polaroid sotto non si spostano.
+$ss-lottery-height: 12.25rem;
 $ss-pixel-frame: #4f6f8f;
 // Neve a puntini (due griglie sfasate), per gli schermi a tutto campo.
 $ss-snow:
@@ -95,6 +98,8 @@ body.ss-no-scroll {
 }
 
 .ss-lottery-invite {
+  // Il riquadro in pixel ha 6px di margine sopra e sotto (per la doppia cornice).
+  min-height: calc(#{$ss-lottery-height} - 12px);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -174,7 +179,7 @@ body.ss-no-scroll {
   --perf: 5.25rem;
   position: relative;
   display: flex;
-  min-height: 9.5rem;
+  min-height: $ss-lottery-height;
   border-radius: 0.6rem;
   color: #22445f;
   background:
