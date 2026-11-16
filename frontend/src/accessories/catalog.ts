@@ -30,6 +30,7 @@ export type AccessoryId =
   | 'scarf'
   | 'crossbody_bag'
   | 'school_backpack'
+  | 'flower_tunic'
 
 /**
  * - `front`: appoggiata sul davanti del biscotto (occhiali, cravatta…)
@@ -57,9 +58,14 @@ export interface Accessory {
   label: string
   group: AccessoryGroupId
   parts: AccessoryPart[]
+  /**
+   * Non si sceglie liberamente: si vince (per ora solo alla lotteria della stanza).
+   * Deve restare allineato con `SPECIAL_ACCESSORIES` nel backend.
+   */
+  special?: true
 }
 
-export type AccessoryGroupId = 'head' | 'hair' | 'eyes' | 'neck' | 'carry'
+export type AccessoryGroupId = 'head' | 'hair' | 'eyes' | 'neck' | 'carry' | 'special'
 
 export const ACCESSORY_GROUPS: { id: AccessoryGroupId; label: string }[] = [
   { id: 'head', label: 'In testa' },
@@ -67,6 +73,7 @@ export const ACCESSORY_GROUPS: { id: AccessoryGroupId; label: string }[] = [
   { id: 'eyes', label: 'Occhiali' },
   { id: 'neck', label: 'Al collo' },
   { id: 'carry', label: 'In spalla' },
+  { id: 'special', label: 'Speciali' },
 ]
 
 const circle = (cx: number, cy: number, r: number) =>
@@ -99,6 +106,90 @@ const stroke = (
 const WHITE = '#FBF8F3'
 const GOLD = '#E0B53A'
 const BLACK = '#1E1B1A'
+
+const r2 = (n: number) => Math.round(n * 100) / 100
+
+/**
+ * Fiori della tunica: `[x, y, grandezza, colore]`. Cinque petali tondi attorno a un bottone,
+ * fitti dal collo all'orlo; il colore indica in quale parte (una per tinta) finiscono i petali.
+ */
+type FlowerTint = 'white' | 'pink' | 'yellow' | 'lilac' | 'coral'
+const TUNIC_FLOWERS: [number, number, number, FlowerTint][] = [
+  // maniche e petto
+  [18, 46, 3, 'white'],
+  [27, 46.5, 2.6, 'pink'],
+  [37, 47.5, 2.8, 'yellow'],
+  [50, 48.5, 3, 'lilac'],
+  [63, 47.5, 2.8, 'coral'],
+  [73, 46.5, 2.6, 'white'],
+  [82, 46, 3, 'yellow'],
+  [18, 57, 2.6, 'lilac'],
+  [26.5, 56.5, 2.8, 'white'],
+  [35.5, 57, 2.6, 'coral'],
+  [44, 57.5, 2.8, 'pink'],
+  [56, 57.5, 2.8, 'white'],
+  [64.5, 57, 2.6, 'yellow'],
+  [73.5, 56.5, 2.8, 'pink'],
+  [82, 57, 2.6, 'coral'],
+  // gonna
+  [36, 67.5, 2.6, 'yellow'],
+  [45, 67, 2.8, 'lilac'],
+  [55, 67.5, 3, 'coral'],
+  [64.5, 67.5, 2.6, 'white'],
+  [31.5, 77, 2.6, 'pink'],
+  [40.5, 77, 2.8, 'white'],
+  [50, 77.5, 3, 'yellow'],
+  [59.5, 77, 2.8, 'pink'],
+  [68.5, 77, 2.6, 'lilac'],
+  [27.5, 87, 2.6, 'coral'],
+  [36.5, 87, 2.8, 'lilac'],
+  [45.5, 87.5, 2.6, 'white'],
+  [55, 87, 3, 'coral'],
+  [64, 87.5, 2.6, 'yellow'],
+  [72.5, 87, 2.8, 'white'],
+  [22, 97, 2.6, 'white'],
+  [31, 97.5, 2.8, 'pink'],
+  [40.5, 97, 2.6, 'yellow'],
+  [50, 98, 3, 'lilac'],
+  [59.5, 97, 2.6, 'coral'],
+  [69, 97.5, 2.8, 'white'],
+  [78, 97, 2.6, 'pink'],
+]
+
+/** Fiorellini tra un fiore e l'altro. */
+const TUNIC_DOTS: [number, number][] = [
+  [22.5, 51.5], [32, 52], [57, 52.5], [68, 52], [77.5, 51.5],
+  [40.5, 62.5], [50, 62], [60, 62.5], [31, 72], [41, 72.5], [50, 72], [59.5, 72.5], [69, 72],
+  [27, 82], [36.5, 82.5], [45.5, 82], [55, 82.5], [64.5, 82], [73.5, 82],
+  [22.5, 92], [32, 92.5], [41, 92], [50.5, 92.5], [59.5, 92], [68.5, 92.5], [78, 92],
+  [26.5, 102.5], [36, 103], [45.5, 103], [55, 103], [64.5, 103], [74, 102.5],
+]
+
+function flowerPetals(tint: FlowerTint) {
+  return TUNIC_FLOWERS.filter((f) => f[3] === tint)
+    .map(([cx, cy, s]) => {
+      // Ogni fiore girato un po' a caso (ma sempre uguale), così non sembrano timbrati.
+      const turn = (((cx * 7 + cy * 13) % 72) * Math.PI) / 180
+      return Array.from({ length: 5 }, (_, i) => {
+        const a = turn + (i * 2 * Math.PI) / 5
+        return circle(r2(cx + Math.cos(a) * s), r2(cy + Math.sin(a) * s), r2(s * 0.56))
+      }).join(' ')
+    })
+    .join(' ')
+}
+
+function flowerCenters(yellow: boolean) {
+  return TUNIC_FLOWERS.filter((f) => (f[3] === 'yellow') === yellow)
+    .map(([cx, cy, s]) => circle(cx, cy, r2(s * 0.58)))
+    .join(' ')
+}
+
+// Dal collo ai piedi: maniche fino ai polsi (le mani restano fuori) e orlo a festone sopra i piedi.
+const TUNIC =
+  'M34 37 C42 42.5 58 42.5 66 37 L84 39.5 Q87 39.5 87 42.5 L87 61 Q87 63.5 84.5 63.5 ' +
+  'L69.5 63.5 C71.5 78 79 92 86 103.5 Q77 108.5 68 106 Q59 109.5 50 107 Q41 109.5 32 106 ' +
+  'Q23 108.5 14 103.5 C21 92 28.5 78 30.5 63.5 L15.5 63.5 Q13 63.5 13 61 L13 42.5 ' +
+  'Q13 39.5 16 39.5 Z'
 
 export const ACCESSORIES: Accessory[] = [
   {
@@ -356,6 +447,24 @@ export const ACCESSORIES: Accessory[] = [
       fill(roundedRect(26, 40, 48, 42, 6), '#2E86C1', 'back', 22),
       fill('M36.5 39 H41.5 L40.5 66 H36 Z', '#F4C542', 'front', 3),
       fill('M58.5 39 H63.5 L64 66 H59.5 Z', '#F4C542', 'front', 3),
+    ],
+  },
+  {
+    id: 'flower_tunic',
+    label: 'Tunica di fiori',
+    group: 'special',
+    special: true,
+    // Tutto `wrap`: in 3D i fiori spuntano un filo dalla tunica, davanti e dietro.
+    parts: [
+      fill(TUNIC, '#4E9A3A', 'wrap', 22),
+      fill(flowerPetals('white'), WHITE, 'wrap', 23.6),
+      fill(flowerPetals('pink'), '#F48FB1', 'wrap', 23.6),
+      fill(flowerPetals('yellow'), '#FFD54F', 'wrap', 23.6),
+      fill(flowerPetals('lilac'), '#B39DDB', 'wrap', 23.6),
+      fill(flowerPetals('coral'), '#FF7F6E', 'wrap', 23.6),
+      fill(flowerCenters(false), '#F4B400', 'wrap', 24.6),
+      fill(flowerCenters(true), '#E67E22', 'wrap', 24.6),
+      fill(TUNIC_DOTS.map(([x, y]) => circle(x, y, 1)).join(' '), '#FFF3C4', 'wrap', 23.2),
     ],
   },
 ]

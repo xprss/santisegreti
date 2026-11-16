@@ -28,3 +28,9 @@ class Accessory(StrEnum):
     SCARF = "scarf"
     CROSSBODY_BAG = "crossbody_bag"
     SCHOOL_BACKPACK = "school_backpack"
+    FLOWER_TUNIC = "flower_tunic"
+
+
+# Non si scelgono liberamente: si vincono (per ora solo alla lotteria della stanza).
+# Nel catalogo del frontend sono le voci con `special: true`.
+SPECIAL_ACCESSORIES: frozenset[Accessory] = frozenset({Accessory.FLOWER_TUNIC})
