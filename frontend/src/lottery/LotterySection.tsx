@@ -23,31 +23,34 @@ type Step = 'idle' | 'printing' | 'flying' | 'done'
 
 const EMERGE_MS = 1000
 const FALL_MS = 1500
-// L'ombra che il biglietto proietta sulle polaroid mentre è sollevato, e quella da posato.
-const SHADOW_LIFTED = 'drop-shadow(0 1.6rem 1.2rem rgba(0, 0, 0, 0.38))'
-const SHADOW_HIGH = 'drop-shadow(0 2.4rem 1.8rem rgba(0, 0, 0, 0.32))'
-const SHADOW_RESTING = 'drop-shadow(0 0 0 rgba(0, 0, 0, 0))'
 
 /**
  * Il volo del biglietto, misurato sulla pagina: esce da sotto il box a scatti (come da una
  * stampante) sopra le polaroid senza spostarle, poi si posa dove c'era il box ondeggiando come
- * un foglio di carta che cade, mentre la sua ombra sfuma. Intanto la sezione passa con calma
- * dall'altezza del box a quella del biglietto.
+ * un foglio di carta che cade, mentre la sua ombra sfuma.
+ *
+ * Si animano solo transform e opacity, che il telefono fa sulla GPU senza ridisegnare niente:
+ * l'ombra è un livello a parte già sfocato (animare un `filter` ridisegnerebbe a ogni
+ * fotogramma tutto il biglietto, timbro compreso, e su mobile scatta).
  */
-async function flyTicket(stage: HTMLElement, box: HTMLElement, clip: HTMLElement, flyer: HTMLElement) {
+async function flyTicket(box: HTMLElement, clip: HTMLElement, flyer: HTMLElement, shadow: HTMLElement) {
   const boxH = box.offsetHeight
   const ticketH = flyer.offsetHeight
   // Parte nascosto dietro al box (il bordo di sotto allineato al suo); sopra il box è tagliato.
   const hidden = boxH - ticketH
   const out = boxH + 12
-  stage.style.height = `${boxH}px`
 
-  await flyer.animate(
+  const emerge = { duration: EMERGE_MS, easing: 'steps(10, jump-end)', fill: 'forwards' } as const
+  shadow.animate(
     [
-      { transform: `translateY(${hidden}px)`, filter: SHADOW_RESTING },
-      { transform: `translateY(${out}px)`, filter: SHADOW_LIFTED },
+      { opacity: 0, transform: 'translateY(0) scale(0.96)' },
+      { opacity: 0.55, transform: 'translateY(1.1rem) scale(1)' },
     ],
-    { duration: EMERGE_MS, easing: 'steps(10, jump-end)', fill: 'forwards' },
+    emerge,
+  )
+  await flyer.animate(
+    [{ transform: `translateY(${hidden}px)` }, { transform: `translateY(${out}px)` }],
+    emerge,
   ).finished
 
   // Fuori del tutto: da qui può salire sopra al box senza tagli.
@@ -57,23 +60,32 @@ async function flyTicket(stage: HTMLElement, box: HTMLElement, clip: HTMLElement
     easing: 'ease-out',
     fill: 'forwards',
   })
-  stage.animate([{ height: `${boxH}px` }, { height: `${ticketH}px` }], {
-    duration: FALL_MS,
-    easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    fill: 'forwards',
-  })
+  const fall = { duration: FALL_MS, easing: 'ease-in-out', fill: 'forwards' } as const
+  // Più il foglio è alto, più l'ombra è lontana e chiara; posandosi sparisce.
+  shadow.animate(
+    [
+      { offset: 0, opacity: 0.55, transform: 'translateY(1.1rem) scale(1)' },
+      { offset: 0.14, opacity: 0.5, transform: 'translateY(2rem) scale(1.04)' },
+      { offset: 0.36, opacity: 0.48, transform: 'translateY(1.9rem) scale(1.03)' },
+      { offset: 0.57, opacity: 0.42, transform: 'translateY(1.3rem) scale(1.02)' },
+      { offset: 0.76, opacity: 0.28, transform: 'translateY(0.7rem) scale(1)' },
+      { offset: 0.9, opacity: 0.12, transform: 'translateY(0.25rem) scale(0.99)' },
+      { offset: 1, opacity: 0, transform: 'translateY(0) scale(0.98)' },
+    ],
+    fall,
+  )
   // Il foglio si solleva, poi scende ondeggiando di qua e di là, sempre meno, fino a posarsi.
   await flyer.animate(
     [
-      { offset: 0, transform: `translate(0, ${out}px) rotate(0deg) scale(1)`, filter: SHADOW_LIFTED },
-      { offset: 0.14, transform: `translate(4px, ${out * 0.8}px) rotate(-4deg) scale(1.12)`, filter: SHADOW_HIGH },
-      { offset: 0.36, transform: `translate(-22px, ${out * 0.48}px) rotate(8deg) scale(1.09)`, filter: SHADOW_HIGH },
-      { offset: 0.57, transform: `translate(16px, ${out * 0.22}px) rotate(-5.5deg) scale(1.06)`, filter: SHADOW_LIFTED },
-      { offset: 0.76, transform: `translate(-8px, ${out * 0.07}px) rotate(3deg) scale(1.03)`, filter: 'drop-shadow(0 0.8rem 0.7rem rgba(0, 0, 0, 0.22))' },
-      { offset: 0.9, transform: 'translate(3px, 0) rotate(-1deg) scale(1.01)', filter: 'drop-shadow(0 0.3rem 0.3rem rgba(0, 0, 0, 0.1))' },
-      { offset: 1, transform: 'translate(0, 0) rotate(0deg) scale(1)', filter: SHADOW_RESTING },
+      { offset: 0, transform: `translate(0, ${out}px) rotate(0deg) scale(1)` },
+      { offset: 0.14, transform: `translate(4px, ${out * 0.8}px) rotate(-4deg) scale(1.12)` },
+      { offset: 0.36, transform: `translate(-22px, ${out * 0.48}px) rotate(8deg) scale(1.09)` },
+      { offset: 0.57, transform: `translate(16px, ${out * 0.22}px) rotate(-5.5deg) scale(1.06)` },
+      { offset: 0.76, transform: `translate(-8px, ${out * 0.07}px) rotate(3deg) scale(1.03)` },
+      { offset: 0.9, transform: 'translate(3px, 0) rotate(-1deg) scale(1.01)' },
+      { offset: 1, transform: 'translate(0, 0) rotate(0deg) scale(1)' },
     ],
-    { duration: FALL_MS, easing: 'ease-in-out', fill: 'forwards' },
+    fall,
   ).finished
 }
 
@@ -81,20 +93,20 @@ async function flyTicket(stage: HTMLElement, box: HTMLElement, clip: HTMLElement
 export function LotterySection({ room, me, lottery }: LotterySectionProps) {
   const take = useTakeTicket(room.id)
   const [step, setStep] = useState<Step>('idle')
-  const stage = useRef<HTMLDivElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const clip = useRef<HTMLDivElement>(null)
   const flyer = useRef<HTMLDivElement>(null)
+  const shadow = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     if (step !== 'flying') return
-    const [st, bx, cl, fl] = [stage.current, box.current, clip.current, flyer.current]
-    if (!st || !bx || !cl || !fl || typeof fl.animate !== 'function') {
+    const [bx, cl, fl, sh] = [box.current, clip.current, flyer.current, shadow.current]
+    if (!bx || !cl || !fl || !sh || typeof fl.animate !== 'function') {
       setStep('done')
       return
     }
     let cancelled = false
-    flyTicket(st, bx, cl, fl).then(
+    flyTicket(bx, cl, fl, sh).then(
       () => !cancelled && setStep('done'),
       () => !cancelled && setStep('done'),
     )
@@ -163,12 +175,13 @@ export function LotterySection({ room, me, lottery }: LotterySectionProps) {
       ) : ticket ? (
         animating ? (
           // Il box resta dov'è; il biglietto vola sopra la pagina e alla fine ne prende il posto.
-          <div ref={stage} className="ss-lottery-stage">
+          <div className="ss-lottery-stage">
             <div ref={box} className="ss-lottery-stage-box" aria-hidden>
               {invite}
             </div>
             <div ref={clip} className="ss-lottery-stage-clip">
               <div ref={flyer} className={`ss-lottery-flyer${step === 'printing' ? ' invisible' : ''}`}>
+                <div ref={shadow} className="ss-lottery-flyer-shadow" />
                 <LotteryTicket number={ticket.number} />
               </div>
             </div>

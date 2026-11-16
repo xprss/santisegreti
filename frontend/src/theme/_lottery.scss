@@ -160,10 +160,26 @@ body.ss-no-scroll {
 }
 
 .ss-lottery-flyer {
+  position: relative;
+  isolation: isolate;
   display: flex;
   justify-content: center;
   margin: 0 2rem;
-  will-change: transform, filter;
+  will-change: transform;
+}
+
+// L'ombra sulle polaroid: sfocata una volta sola, poi si muovono solo posizione e opacità.
+.ss-lottery-flyer-shadow {
+  position: absolute;
+  z-index: -1;
+  inset: 6% 3% 0;
+  max-width: 40rem;
+  margin: 0 auto;
+  border-radius: 0.8rem;
+  background: rgba(0, 0, 0, 0.6);
+  filter: blur(14px);
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 // --- il biglietto ----------------------------------------------------------------------------
@@ -343,12 +359,29 @@ body.ss-no-scroll {
   border-radius: 50%;
   background: #2ecc40;
   box-shadow: 0 0 0 2px #fff;
-  animation: ss-online-pulse 2s ease-in-out infinite;
+
+  // L'alone che pulsa: un livello a parte che si ingrandisce e sfuma, così non si ridisegna
+  // niente a ogni fotogramma (un box-shadow animato sì).
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: rgba(#2ecc40, 0.45);
+    animation: ss-online-pulse 2s ease-out infinite;
+    will-change: transform, opacity;
+  }
 }
 
 @keyframes ss-online-pulse {
-  50% {
-    box-shadow: 0 0 0 2px #fff, 0 0 0 5px rgba(#2ecc40, 0.35);
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
   }
 }
 
@@ -741,7 +774,7 @@ body.ss-no-scroll {
   .ss-draw-glitter,
   .ss-draw-confetti,
   .ss-draw-omino-art,
-  .ss-polaroid-online,
+  .ss-polaroid-online::after,
   .ss-lottery-invite-gift,
   .ss-lottery-flyer * {
     animation: none !important;
