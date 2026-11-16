@@ -132,7 +132,7 @@ export function LotteryCountdownOverlay({ roomId, me, lottery, online }: Overlay
       {!revealed && (
         <div className="ss-draw-count" aria-hidden>
           <span key={winner ? 'go' : secondsLeft} className="ss-draw-count-number">
-            {winner || secondsLeft === 0 ? '!!' : secondsLeft}
+            {winner || secondsLeft === 0 ? '!!!' : secondsLeft}
           </span>
         </div>
       )}
