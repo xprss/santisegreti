@@ -18,6 +18,13 @@ import { prefersReducedMotion } from './webgl'
 
 const INTRO_SECONDS = 3.6
 
+// Densità del canvas: oltre 2 sul telefono non si vede differenza, si paga solo in GPU. Sotto 1,25
+// la scena diventa sgranata, quindi in affanno si rinuncia prima a ombre e MSAA.
+const MAX_DPR = Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 2)
+const MIN_DPR = Math.min(1.25, MAX_DPR)
+// Il primo paio di secondi (shader da compilare, planata iniziale) non dice nulla sulle prestazioni.
+const MONITOR_DELAY_MS = 2500
+
 const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3)
 
 interface Props {
@@ -131,9 +138,14 @@ export default function ChristmasScene({
   const container = useRef<HTMLDivElement>(null)
   const visible = useOnScreen(container)
   const [reduced] = useState(prefersReducedMotion)
-  const [dpr, setDpr] = useState(1.5)
+  const [dpr, setDpr] = useState(MAX_DPR)
   // Su dispositivi in affanno si rinuncia a ombre, MSAA e a un po' di dettaglio, non alla magia.
   const [rich, setRich] = useState(true)
+  const [monitoring, setMonitoring] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setMonitoring(true), MONITOR_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const radius = ringRadius(participants.length)
@@ -156,12 +168,24 @@ export default function ChristmasScene({
         gl={{ antialias: false, powerPreference: 'high-performance' }}
         onPointerMissed={() => setSelectedId(null)}
       >
-        <PerformanceMonitor
-          onDecline={() => {
-            setDpr(1)
-            setRich(false)
-          }}
-        />
+        {/* La risoluzione segue gli fps a piccoli passi (e risale se c'è margine); ombre e MSAA si
+            spengono solo se il telefono fatica anche alla risoluzione più bassa. */}
+        {monitoring && (
+          <PerformanceMonitor
+            factor={1}
+            step={0.2}
+            flipflops={4}
+            onChange={({ factor }) =>
+              setDpr(Math.round((MIN_DPR + (MAX_DPR - MIN_DPR) * factor) * 4) / 4)
+            }
+            onDecline={({ factor }) => {
+              if (factor < 0.05) setRich(false)
+            }}
+            onFallback={({ factor }) => {
+              if (factor < 0.5) setRich(false)
+            }}
+          />
+        )}
         <color attach="background" args={[HORIZON]} />
 
         <hemisphereLight args={['#9db8ff', '#3a2a24', 0.75]} />
