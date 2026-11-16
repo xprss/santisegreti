@@ -68,7 +68,7 @@ export function LotterySection({ room, me, lottery }: LotterySectionProps) {
           <i className="bi bi-gift-fill ss-lottery-invite-gift" aria-hidden />
           <div className="ss-lottery-invite-body">
             <p className="ss-pixel-text mb-2">
-              LOTTERIA DELLA STANZA! Il premio? Lo scopre solo chi vince.
+              Partecipa alla Lotteria di Natale!!!
             </p>
             <p className="ss-pixel-small mb-3">
               {lottery.ticket_count > 0 ? torn(lottery.ticket_count) : 'Nessun biglietto, per ora'}
