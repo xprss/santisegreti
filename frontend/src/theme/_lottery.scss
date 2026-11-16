@@ -50,78 +50,6 @@ body.ss-no-scroll {
   color: rgba($ss-pixel-ink, 0.75);
 }
 
-.ss-pixel-ghost {
-  visibility: hidden;
-}
-
-.ss-pixel-dialog-wrap {
-  position: relative;
-  width: min(100% - 1.5rem, 34rem);
-  margin: 0 auto;
-}
-
-.ss-pixel-dialog {
-  min-height: 6.5rem;
-  padding-right: 2rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.ss-pixel-next {
-  position: absolute;
-  right: 0.8rem;
-  bottom: 0.4rem;
-  color: #d0473f;
-  font-size: 0.9rem;
-  animation: ss-pixel-bounce 0.7s steps(2) infinite;
-}
-
-@keyframes ss-pixel-bounce {
-  50% {
-    transform: translateY(3px);
-  }
-}
-
-.ss-pixel-choices {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 0.6rem);
-  display: flex;
-  flex-direction: column;
-  padding: 0.4rem 0.6rem;
-  min-width: 6.5rem;
-  z-index: 1;
-}
-
-.ss-pixel-choice {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.2rem;
-  border: 0;
-  background: none;
-  font-family: $ss-pixel-font;
-  font-size: 1.2rem;
-  color: $ss-pixel-ink;
-  text-align: left;
-
-  &:focus-visible {
-    outline: 2px dashed $ss-pixel-frame;
-    outline-offset: 1px;
-  }
-}
-
-.ss-pixel-cursor {
-  visibility: hidden;
-  width: 1rem;
-  font-size: 0.85rem;
-  color: $ss-pixel-ink;
-}
-
-.ss-pixel-choice.is-active .ss-pixel-cursor {
-  visibility: visible;
-}
-
 .ss-pixel-button {
   display: inline-flex;
   align-items: center;
@@ -190,6 +118,124 @@ body.ss-no-scroll {
   .ss-pixel-button {
     width: 100%;
     justify-content: center;
+  }
+}
+
+// Il biglietto che esce da sotto il box dell'invito e poi ne prende il posto.
+.ss-lottery-print {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.ss-lottery-print-box,
+.ss-lottery-print-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  width: 100%;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 0;
+  }
+}
+
+.ss-lottery-print-box {
+  position: relative;
+  z-index: 1;
+}
+
+// Durante la stampa la fessura sotto il box è chiusa…
+.ss-lottery-print.is-printing .ss-lottery-print-slot {
+  grid-template-rows: 0fr;
+
+  > div {
+    overflow: hidden;
+  }
+}
+
+// …poi si apre e il biglietto scivola fuori da sotto il box, a scatti come da una stampante.
+.ss-lottery-print.is-emerging .ss-lottery-print-slot {
+  animation: ss-slot-open 0.9s cubic-bezier(0.3, 0, 0.3, 1) both;
+
+  > div {
+    overflow: hidden;
+    // Spazio per l'ombra del biglietto mentre la fessura taglia.
+    padding: 0 0.5rem 1rem;
+  }
+
+  .ss-ticket-shadow {
+    animation: ss-ticket-emerge 0.9s steps(9, jump-end) both;
+  }
+}
+
+// Infine il box si ritira e il biglietto sale al suo posto, passandoci sopra.
+.ss-lottery-print.is-replacing {
+  .ss-lottery-print-box {
+    animation: ss-box-retire 0.65s cubic-bezier(0.5, 0, 0.2, 1) both;
+
+    > div {
+      overflow: hidden;
+    }
+  }
+
+  .ss-lottery-print-slot {
+    position: relative;
+    z-index: 2;
+
+    > div {
+      padding: 0 0.5rem 1rem;
+    }
+  }
+
+  .ss-ticket-shadow {
+    animation: ss-ticket-rise 0.65s cubic-bezier(0.3, 1.3, 0.5, 1) both;
+  }
+}
+
+@keyframes ss-slot-open {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes ss-ticket-emerge {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes ss-box-retire {
+  0% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes ss-ticket-rise {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-0.5rem) rotate(-2deg) scale(1.04);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
   }
 }
 
@@ -406,231 +452,6 @@ body.ss-no-scroll {
   transform: rotate(-8deg);
 }
 
-// --- lo strappo ------------------------------------------------------------------------------
-
-.ss-tear {
-  position: fixed;
-  inset: 0;
-  z-index: 1080;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 1.5rem;
-  padding: 1rem 0 max(1.25rem, env(safe-area-inset-bottom));
-  // Fondo scuro a quadretti, come una schermata di gioco.
-  background:
-    $ss-snow,
-    radial-gradient(ellipse at 50% 110%, rgba($ss-red, 0.55), transparent 60%),
-    rgba($ss-green-dark, 0.96);
-  animation: ss-fade-in 0.25s ease-out both;
-  transition: background 0.5s ease;
-
-  // Mentre il biglietto vola al suo posto, tutto il resto sparisce.
-  &.is-leaving {
-    background: transparent;
-
-    .ss-tear-machine,
-    .ss-tear-stub {
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-  }
-}
-
-.ss-tear-stage {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.75rem;
-}
-
-// La macchinetta: una colonnina rossa in pixel, con fessura sul lato destro.
-.ss-tear-machine {
-  position: relative;
-  flex: 0 0 auto;
-  width: 5.5rem;
-  height: 10rem;
-  background: #c8323d;
-  border: 4px solid #3a1418;
-  border-radius: 6px 6px 2px 2px;
-  box-shadow: inset -6px 0 0 rgba(0, 0, 0, 0.22), inset 6px 6px 0 rgba(255, 255, 255, 0.18);
-  image-rendering: pixelated;
-  z-index: 1;
-}
-
-.ss-tear-machine-sign {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.5rem;
-  right: 0.5rem;
-  padding: 0.15rem 0;
-  background: #fff3c4;
-  border: 3px solid #3a1418;
-  font-family: $ss-pixel-font;
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-align: center;
-  color: #3a1418;
-}
-
-.ss-tear-machine-light {
-  position: absolute;
-  top: 3.3rem;
-  left: 50%;
-  width: 0.9rem;
-  height: 0.9rem;
-  margin-left: -0.45rem;
-  background: #ffd54f;
-  border: 3px solid #3a1418;
-  animation: ss-machine-blink 0.5s steps(1) infinite;
-}
-
-@keyframes ss-machine-blink {
-  50% {
-    background: #7a5d10;
-  }
-}
-
-.ss-tear-stage[data-step='ask'] .ss-tear-machine-light,
-.ss-tear-stage[data-step='error'] .ss-tear-machine-light {
-  animation: none;
-}
-
-.ss-tear-machine-slot {
-  position: absolute;
-  right: -4px;
-  top: 5.2rem;
-  width: 6px;
-  height: 3.6rem;
-  background: #120607;
-}
-
-// Dove esce il biglietto: la fessura taglia tutto quello che è ancora dentro la macchinetta.
-.ss-tear-feed {
-  position: relative;
-  flex: 0 1 15rem;
-  height: 10rem;
-  margin-left: -2px;
-  overflow: visible;
-  clip-path: inset(-50vh -50vw -50vh 0);
-}
-
-.ss-tear-ticket {
-  position: absolute;
-  left: 0;
-  top: 5.2rem;
-  width: 100%;
-  aspect-ratio: 40 / 18;
-  transform: translateY(-0.5rem);
-  animation: ss-ticket-print 1s steps(10) both;
-}
-
-@keyframes ss-ticket-print {
-  from {
-    transform: translate(-100%, -0.5rem);
-  }
-  to {
-    transform: translate(0, -0.5rem);
-  }
-}
-
-.ss-tear-half {
-  position: absolute;
-  inset: 0;
-}
-
-.ss-pixel-ticket-art {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-}
-
-// Il taglio a zig-zag lungo la perforazione (x = 11/40 = 27.5%).
-.ss-tear-stub {
-  clip-path: polygon(
-    0 0, 28.75% 0, 26.25% 12.5%, 28.75% 25%, 26.25% 37.5%, 28.75% 50%, 26.25% 62.5%,
-    28.75% 75%, 26.25% 87.5%, 28.75% 100%, 0 100%
-  );
-}
-
-.ss-tear-main {
-  clip-path: polygon(
-    28.75% 0, 100% 0, 100% 100%, 28.75% 100%, 26.25% 87.5%, 28.75% 75%, 26.25% 62.5%,
-    28.75% 50%, 26.25% 37.5%, 28.75% 25%, 26.25% 12.5%
-  );
-  transform-origin: 30% 50%;
-}
-
-.ss-tear-stage[data-step='tear'] {
-  .ss-tear-main {
-    animation:
-      ss-tear-shake 0.42s steps(6) both,
-      ss-tear-rip 0.35s steps(4) 0.45s forwards;
-  }
-
-  .ss-tear-stub {
-    animation: ss-tear-stub-drop 0.5s steps(5) 0.5s forwards;
-  }
-}
-
-@keyframes ss-tear-shake {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(2px, -1px);
-  }
-  50% {
-    transform: translate(-2px, 1px);
-  }
-  75% {
-    transform: translate(1px, 1px);
-  }
-}
-
-@keyframes ss-tear-rip {
-  to {
-    transform: translate(0.9rem, -0.4rem) rotate(6deg);
-  }
-}
-
-@keyframes ss-tear-stub-drop {
-  to {
-    transform: translateY(0.35rem) rotate(-3deg);
-    filter: brightness(0.85);
-  }
-}
-
-.ss-tear-confetti {
-  position: absolute;
-  left: 27.5%;
-  top: 50%;
-
-  span {
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    background: var(--c);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-    opacity: 0;
-    animation: ss-confetti-pop 0.75s steps(6) calc(0.5s + var(--d)) both;
-  }
-}
-
-@keyframes ss-confetti-pop {
-  0% {
-    opacity: 1;
-    transform: rotate(var(--a)) translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(var(--a)) translateX(4.5rem) translateY(1rem);
-  }
-}
-
 // --- estrazione in diretta -------------------------------------------------------------------
 
 .ss-draw {
@@ -677,7 +498,13 @@ body.ss-no-scroll {
   height: 0.65rem;
   margin-right: 0.35rem;
   background: #ffd54f;
-  animation: ss-machine-blink 1s steps(1) infinite;
+  animation: ss-live-blink 1s steps(1) infinite;
+}
+
+@keyframes ss-live-blink {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .ss-draw-count {
@@ -987,8 +814,6 @@ body.ss-no-scroll {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ss-tear,
-  .ss-tear-ticket,
   .ss-ticket.is-fresh,
   .ss-ticket.is-fresh .ss-stamp,
   .ss-draw,
@@ -1002,7 +827,7 @@ body.ss-no-scroll {
   .ss-draw-omino-art,
   .ss-polaroid-online,
   .ss-lottery-invite-gift,
-  .ss-pixel-next {
+  .ss-lottery-print * {
     animation: none !important;
   }
 }

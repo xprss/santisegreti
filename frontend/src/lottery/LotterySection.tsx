@@ -1,11 +1,13 @@
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { errorMessage } from '../api/client'
+import { useTakeTicket } from '../api/hooks'
 import type { Lottery, Me, RoomDetail } from '../api/types'
 import { Gingerbread } from '../components/Gingerbread'
 import { accessoryLabel } from '../accessories/catalog'
 import { plural } from '../lib/format'
+import { prefersReducedMotion } from '../lib/motion'
 import { LotteryTicket, StampInkFilter, TicketStamp } from './LotteryTicket'
-import { TicketTear } from './TicketTear'
 
 interface LotterySectionProps {
   room: RoomDetail
@@ -13,11 +15,26 @@ interface LotterySectionProps {
   lottery: Lottery | null | undefined
 }
 
+/**
+ * Prendere il biglietto: `printing` mentre il server lo stampa, `emerging` mentre esce da sotto
+ * il box come da una fessura, `replacing` mentre sale e prende il posto del box, `done` alla fine.
+ */
+type Step = 'idle' | 'printing' | 'emerging' | 'replacing' | 'done'
+
+const EMERGE_MS = 1000
+const REPLACE_MS = 650
+
 /** La lotteria della stanza, sopra le polaroid: invito, biglietto, poi il risultato. */
 export function LotterySection({ room, me, lottery }: LotterySectionProps) {
-  const [tearing, setTearing] = useState(false)
-  const [fresh, setFresh] = useState(false)
-  const ticketRef = useRef<HTMLElement>(null)
+  const take = useTakeTicket(room.id)
+  const [step, setStep] = useState<Step>('idle')
+
+  useEffect(() => {
+    if (step !== 'emerging' && step !== 'replacing') return
+    const next = step === 'emerging' ? 'replacing' : 'done'
+    const timer = window.setTimeout(() => setStep(next), step === 'emerging' ? EMERGE_MS : REPLACE_MS)
+    return () => window.clearTimeout(timer)
+  }, [step])
 
   if (!lottery) return null
 
@@ -34,6 +51,38 @@ export function LotterySection({ room, me, lottery }: LotterySectionProps) {
   }
 
   const ticket = lottery.my_ticket
+  const animating = step === 'printing' || step === 'emerging' || step === 'replacing'
+
+  const takeTicket = () => {
+    setStep('printing')
+    take.mutate(undefined, {
+      onSuccess: () => setStep(prefersReducedMotion() ? 'done' : 'emerging'),
+      onError: () => setStep('idle'),
+    })
+  }
+
+  const invite = (
+    <div className="ss-pixel-box ss-lottery-invite">
+      <i className="bi bi-gift-fill ss-lottery-invite-gift" aria-hidden />
+      <div className="ss-lottery-invite-body">
+        <p className="ss-pixel-text text-center mb-3">Partecipa alla Lotteria di Natale!</p>
+        <button
+          type="button"
+          className="ss-pixel-button"
+          onClick={takeTicket}
+          disabled={step !== 'idle'}
+        >
+          <span aria-hidden>▶</span>
+          {step === 'idle' ? 'PRENDI UN BIGLIETTO' : 'STAMPA IN CORSO…'}
+        </button>
+        {take.isError && (
+          <p className="ss-pixel-small text-danger text-center mt-2 mb-0">
+            {errorMessage(take.error)}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 
   return (
     <section className="ss-lottery" aria-labelledby="lottery-title">
@@ -45,30 +94,25 @@ export function LotterySection({ room, me, lottery }: LotterySectionProps) {
       {lottery.status === 'drawn' && lottery.winner ? (
         <LotteryResult lottery={lottery} me={me} />
       ) : ticket ? (
-        <LotteryTicket ref={ticketRef} number={ticket.number} fresh={fresh} waiting={tearing} />
-      ) : lottery.status === 'open' ? (
-        <div className="ss-pixel-box ss-lottery-invite">
-          <i className="bi bi-gift-fill ss-lottery-invite-gift" aria-hidden />
-          <div className="ss-lottery-invite-body">
-            <p className="ss-pixel-text text-center mb-3">Partecipa alla Lotteria di Natale!</p>
-            <button type="button" className="ss-pixel-button" onClick={() => setTearing(true)}>
-              <span aria-hidden>▶</span>PRENDI UN BIGLIETTO
-            </button>
+        // Il biglietto esce da sotto il box, poi il box si ritira e lui sale al suo posto.
+        <div className={`ss-lottery-print is-${step}`}>
+          {animating && (
+            <div className="ss-lottery-print-box" aria-hidden>
+              <div>{invite}</div>
+            </div>
+          )}
+          <div className="ss-lottery-print-slot">
+            <div>
+              <LotteryTicket number={ticket.number} fresh={step === 'done'} />
+            </div>
           </div>
         </div>
+      ) : lottery.status === 'open' ? (
+        invite
       ) : (
         <p className="ss-pixel-box ss-lottery-note mb-0">
           Estrazione in corso: {plural(lottery.ticket_count, 'biglietto', 'biglietti')} nell'urna.
         </p>
-      )}
-
-      {tearing && (
-        <TicketTear
-          roomId={room.id}
-          target={ticketRef}
-          onClose={() => setTearing(false)}
-          onLanded={() => setFresh(true)}
-        />
       )}
     </section>
   )
