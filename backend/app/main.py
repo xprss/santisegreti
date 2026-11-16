@@ -7,7 +7,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, get_settings
 from app.db import init_db
-from app.routers import auth, draw, exclusions, invites, me, rooms
+from app.routers import auth, draw, exclusions, invites, lottery, me, rooms
+from app.services.lottery_hub import LotteryHub
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -17,12 +18,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "SESSION_SECRET deve essere lungo almeno 32 caratteri (es. `openssl rand -hex 32`)."
         )
 
+    hub = LotteryHub()
+
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         client = await init_db(settings)
+        await hub.resume_pending()
         try:
             yield
         finally:
+            await hub.shutdown()
             await client.close()
 
     app = FastAPI(
@@ -33,9 +38,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
     )
     app.dependency_overrides[get_settings] = lambda: settings
+    app.state.lottery_hub = hub
 
     api = APIRouter(prefix="/api")
-    for module in (auth, me, rooms, invites, exclusions, draw):
+    for module in (auth, me, rooms, invites, exclusions, draw, lottery):
         api.include_router(module.router)
     app.include_router(api)
 

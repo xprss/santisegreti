@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, StringConstraints
@@ -50,10 +50,16 @@ class UserPublic(BaseModel):
 
 class Me(UserPublic):
     email: str
+    # Accessori speciali vinti e già utilizzabili.
+    unlocked_accessories: list[Accessory]
 
     @classmethod
     def of(cls, user: User) -> "Me":
-        return cls(**UserPublic.of(user).model_dump(), email=user.email)
+        return cls(
+            **UserPublic.of(user).model_dump(),
+            email=user.email,
+            unlocked_accessories=user.unlocked_accessories(),
+        )
 
 
 class MeUpdate(BaseModel):
@@ -139,3 +145,32 @@ class RedeemOut(BaseModel):
 
 class MyAssignment(BaseModel):
     receiver: UserPublic | None
+
+
+# `countdown`: estratta ma non ancora rivelata. Il vincitore c'è già, però non esce dal server.
+LotteryPhase = Literal["draft", "open", "countdown", "drawn"]
+
+
+class TicketOut(BaseModel):
+    number: str
+    taken_at: datetime
+
+
+class LotteryWinner(BaseModel):
+    user: UserPublic
+    number: str
+
+
+class LotteryOut(BaseModel):
+    status: LotteryPhase
+    prize: Accessory
+    ticket_count: int
+    # Chi ha il biglietto lo vedono tutti; il numero, solo chi lo possiede.
+    ticket_holder_ids: list[PydanticObjectId]
+    my_ticket: TicketOut | None
+    # Solo durante il countdown: millisecondi alla rivelazione, contati dal server
+    # (il browser non deve fidarsi del proprio orologio).
+    countdown_ms: int | None
+    winner: LotteryWinner | None
+    opened_at: datetime | None
+    drawn_at: datetime | None

@@ -24,6 +24,9 @@ class Settings(BaseSettings):
 
     invite_ttl_seconds: int = 180
 
+    # Dal "Estrai" dell'admin alla rivelazione del vincitore, uguale per tutti i collegati.
+    lottery_countdown_seconds: float = 10
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -3,7 +3,7 @@ from beanie.operators import In
 from fastapi import APIRouter, HTTPException, status
 
 from app.auth.deps import CurrentUser
-from app.models import Assignment, Invite, Room, User
+from app.models import Assignment, Invite, Lottery, LotteryStatus, Room, User
 from app.routers.common import ensure_open, load_room_for_admin, load_room_for_member
 from app.schemas import (
     ExclusionGroupOut,
@@ -13,6 +13,7 @@ from app.schemas import (
     RoomUpdate,
     UserPublic,
 )
+from app.services.lottery_hub import LotteryHubDep
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -78,16 +79,19 @@ async def update_room(room_id: PydanticObjectId, body: RoomUpdate, user: Current
 
 
 @router.delete("/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_room(room_id: PydanticObjectId, user: CurrentUser) -> None:
+async def delete_room(room_id: PydanticObjectId, user: CurrentUser, hub: LotteryHubDep) -> None:
     room = await load_room_for_admin(room_id, user)
     await Assignment.find(Assignment.room_id == room.id).delete()
     await Invite.find(Invite.room_id == room.id).delete()
+    # Chi ha vinto la lotteria tiene il premio: lo sblocco sta sull'utente, non qui.
+    await Lottery.find(Lottery.room_id == room.id).delete()
     await room.delete()
+    await hub.close_room(room.id)
 
 
 @router.delete("/{room_id}/participants/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_participant(
-    room_id: PydanticObjectId, user_id: PydanticObjectId, user: CurrentUser
+    room_id: PydanticObjectId, user_id: PydanticObjectId, user: CurrentUser, hub: LotteryHubDep
 ) -> None:
     room = await load_room_for_member(room_id, user)
     if user_id == room.admin_id:
@@ -114,3 +118,14 @@ async def remove_participant(
             groups.append(group)
     room.exclusion_groups = groups
     await room.save()
+
+    # Il biglietto della lotteria esce con lui, se non si è ancora estratto.
+    await Lottery.get_pymongo_collection().update_one(
+        {
+            "room_id": room.id,
+            "status": {"$in": [LotteryStatus.DRAFT.value, LotteryStatus.OPEN.value]},
+        },
+        {"$pull": {"tickets": {"user_id": user_id}}},
+    )
+    await hub.kick(room.id, user_id)
+    await hub.broadcast_lottery(room.id)
