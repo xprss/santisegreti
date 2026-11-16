@@ -16,7 +16,7 @@ import { daysUntil, formatEuro, parseDay, plural } from '../lib/format'
 const ChristmasScene = lazy(() => import('../scene/ChristmasScene'))
 
 /** Stelline che brillano sullo sfondo della rivelazione (posizioni fisse, ritmi diversi). */
-const STARS: CSSProperties[] = Array.from({ length: 28 }, (_, i) => {
+const STARS: CSSProperties[] = Array.from({ length: 20 }, (_, i) => {
   const r = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1
   return {
     left: `${(r(1) * 96 + 2).toFixed(1)}%`,
@@ -148,12 +148,15 @@ function AssignmentCard({ room }: { room: RoomDetail }) {
           <span key={i} style={star} />
         ))}
       </div>
-      <Gingerbread
-        color={receiver.color}
-        accessory={receiver.accessory}
-        size={250}
-        className="ss-reveal-omino"
-      />
+      {/* Il contenitore si anima, l'omino dentro porta l'alone: così l'alone si disegna una volta sola. */}
+      <div className="ss-reveal-omino">
+        <Gingerbread
+          color={receiver.color}
+          accessory={receiver.accessory}
+          size={250}
+          className="ss-reveal-omino-art"
+        />
+      </div>
       <div className="ss-reveal-flash" aria-hidden />
       <RevealName name={receiver.name} />
       <div className="ss-reveal-burst" aria-hidden>
@@ -211,7 +214,8 @@ function RevealName({ name }: { name: string }) {
       style={size ? ({ '--ss-name-size': `${size}px` } as CSSProperties) : undefined}
     >
       <span className="visually-hidden">Farai il regalo a </span>
-      {name}
+      {/* Oro e ombre stanno sullo span interno, l'animazione sull'h2: niente filtri ricalcolati a ogni frame. */}
+      <span className="ss-reveal-name-text">{name}</span>
     </h2>
   )
 }
