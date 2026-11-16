@@ -110,7 +110,12 @@ function useOnScreen<T extends Element>(ref: React.RefObject<T | null>) {
   useEffect(() => {
     const element = ref.current
     if (!element || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
+    // La parte coperta dall'header sticky non conta: sul telefono lo snap lascia lì sotto il fondo
+    // della scena, e senza questo margine il WebGL continuerebbe a disegnare mentre leggi la pagina.
+    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ss-header-h')) || 0
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), {
+      rootMargin: `${-Math.ceil(header + 1)}px 0px 0px 0px`,
+    })
     observer.observe(element)
     return () => observer.disconnect()
   }, [ref])
