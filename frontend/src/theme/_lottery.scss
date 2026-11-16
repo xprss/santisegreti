@@ -650,8 +650,6 @@ body.ss-no-scroll {
   text-align: center;
   background:
     $ss-snow,
-    radial-gradient(ellipse 90% 22% at 20% 102%, $ss-green 0 98%, transparent 100%),
-    radial-gradient(ellipse 90% 26% at 85% 104%, $ss-green-dark 0 98%, transparent 100%),
     radial-gradient(circle at 50% 38%, #d03a44 0%, $ss-red 38%, $ss-red-dark 72%, #4a0410 100%);
   animation: ss-fade-in 0.3s ease-out both;
 }
@@ -797,8 +795,8 @@ body.ss-no-scroll {
   margin: -130vmax 0 0 -130vmax;
   background: repeating-conic-gradient(
     from 0deg,
-    rgba(#ffe08a, 0.62) 0deg 7deg,
-    rgba(#ffe08a, 0) 7deg 18deg
+    rgba(#ffe08a, 0.5) 0deg 8deg,
+    rgba(#ffe08a, 0) 8deg 30deg
   );
   mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.75) 18%, transparent 42%);
   animation: ss-rays 26s linear infinite, ss-beams-in 1.1s cubic-bezier(0.2, 1.2, 0.4, 1) both;

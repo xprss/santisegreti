@@ -153,7 +153,6 @@ export function LotteryCountdownOverlay({ roomId, me, lottery, online }: Overlay
           {/* La gloria: fasci di luce a tutto schermo e glitter ovunque, dietro a tutto. */}
           <div className="ss-draw-glory" aria-hidden>
             <div className="ss-draw-beams" />
-            <div className="ss-draw-beams ss-draw-beams--thin" />
             <div className="ss-draw-halo" />
             {GLITTER.map((style, i) => (
               <span key={`g${i}`} className="ss-draw-glitter" style={style} />
