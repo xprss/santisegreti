@@ -287,7 +287,7 @@ export default function ChristmasScene({
           <Vignette offset={0.28} darkness={0.55} />
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
           {/* grana da pellicola, dopo il tone mapping: si vede nei mezzitoni, non sporca i neri */}
-          <Noise blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.4} />
+          <Noise blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.15} />
           {/* obiettivo grandangolare: tutto il fotogramma si curva verso i bordi */}
           <Barrel />
         </EffectComposer>
