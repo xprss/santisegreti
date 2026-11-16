@@ -4,6 +4,7 @@ import '@fontsource/henny-penny'
 import '@fontsource/pixelify-sans/400.css'
 import '@fontsource/pixelify-sans/700.css'
 import '@fontsource/rubik-mono-one'
+import './theme/pixel-digits.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './theme/theme.scss'
 
