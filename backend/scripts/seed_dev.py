@@ -10,8 +10,9 @@ import sys
 
 from app.config import get_settings
 from app.db import init_db
-from app.models import Accessory, ExclusionGroup, Room, User
-from app.models.user import DEFAULT_COLORS
+from app.models import Accessory, ExclusionGroup, Lottery, LotteryStatus, Room, Ticket, User
+from app.models.user import DEFAULT_COLORS, utcnow
+from app.services.lottery import new_ticket_number
 
 PEOPLE = [
     ("Anna", "Tè verde, gialli svedesi e piante grasse che sopravvivono a tutto.", "santa_hat"),
@@ -56,6 +57,13 @@ async def main(admin_email: str) -> None:
         exclusion_groups=[ExclusionGroup(name="Coppia Bruno e Carla", member_ids=ids[1:3])],
     )
     await room.insert()
+    # Lotteria già aperta, con qualche biglietto preso (l'admin il suo lo strappa da sé).
+    await Lottery(
+        room_id=room.id,
+        status=LotteryStatus.OPEN,
+        opened_at=utcnow(),
+        tickets=[Ticket(user_id=uid, number=new_ticket_number()) for uid in ids[1:6]],
+    ).insert()
     print(f"Stanza demo creata: /stanze/{room.id}")
     print(f"Accesso di prova come admin: {admin_email}")
 

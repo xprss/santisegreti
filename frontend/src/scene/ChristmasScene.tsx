@@ -1,24 +1,66 @@
 import { Environment, Lightformer, PerformanceMonitor, Sparkles } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing'
-import { ToneMappingMode } from 'postprocessing'
+import { Bloom, EffectComposer, Noise, ToneMapping, Vignette, wrapEffect } from '@react-three/postprocessing'
+import { BlendFunction, ToneMappingMode } from 'postprocessing'
 import { useEffect, useRef, useState } from 'react'
 import { CloseButton } from 'react-bootstrap'
-import { MathUtils } from 'three'
+import { MathUtils, type PerspectiveCamera, type Points, type ShaderMaterial } from 'three'
 import type { UserPublic } from '../api/types'
 import { Gingerbread } from '../components/Gingerbread'
 import { GingerbreadRing } from './GingerbreadRing'
 import { Landscape } from './Landscape'
-import { cameraDistance, FOV, lookAtLift, ringRadius, sceneryScale } from './layout'
+import {
+  CAMERA_HEIGHT,
+  cameraDistance,
+  cameraFov,
+  INTRO_FOV,
+  ringRadius,
+  sceneryScale,
+} from './layout'
 import { Ground } from './Ground'
 import { HORIZON, Sky } from './Sky'
 import { Snow } from './Snow'
 import { Tree, TREE_TOP } from './Tree'
 import { prefersReducedMotion } from './webgl'
+import { BarrelEffect, wideLensEvents } from './wideLens'
+
+const Barrel = wrapEffect(BarrelEffect)
+
+/**
+ * Lo shader delle Sparkles di drei, negli angoli di ogni quadratino, dà un'alpha appena negativa.
+ * Nel buffer half-float del post-processing non viene tagliata a zero e scurisce il fondo a
+ * riquadri (con la camera vicina si vedono bene): la blocchiamo a zero.
+ */
+function clampSparkleAlpha(points: Points | null) {
+  const material = points?.material as ShaderMaterial | undefined
+  if (!material?.fragmentShader || material.userData.clamped) return
+  material.fragmentShader = material.fragmentShader.replace(
+    'strength * vOpacity',
+    'max(strength, 0.0) * vOpacity',
+  )
+  material.userData.clamped = true
+  material.needsUpdate = true
+}
 
 const INTRO_SECONDS = 3.6
 
+// Densità del canvas: oltre 2 sul telefono non si vede differenza, si paga solo in GPU. Sotto 1,25
+// la scena diventa sgranata, quindi in affanno si rinuncia prima a ombre e MSAA.
+const MAX_DPR = Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 2)
+const MIN_DPR = Math.min(1.25, MAX_DPR)
+// Il primo paio di secondi (shader da compilare, planata iniziale) non dice nulla sulle prestazioni.
+const MONITOR_DELAY_MS = 2500
+
 const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3)
+
+/**
+ * Punto guardato dalla camera, sull'asse dell'albero: si guarda in su, omini in basso e stella in
+ * alto. Col campo verticale più stretto (schermo orizzontale) si guarda un po' più su, così la
+ * stella non finisce sotto il titolo.
+ */
+function lookHeight(fov: number): number {
+  return 2.55 + MathUtils.clamp((100 - fov) / 28, 0, 1) * 0.55
+}
 
 interface Props {
   participants: UserPublic[]
@@ -30,8 +72,9 @@ interface Props {
 }
 
 /**
- * Camera che gira piano attorno all'albero e si allontana quanto basta per far stare tutti.
- * All'apertura arriva dall'alto con una planata; il puntatore la sposta appena (parallasse).
+ * Camera bassa e vicina, in grandangolo: gli omini in primo piano visti dal basso e l'albero che
+ * svetta dietro. Gira piano attorno all'albero e gli omini le sfilano davanti. All'apertura arriva
+ * dall'alto con una planata, e intanto l'obiettivo si apre; il puntatore la sposta appena.
  */
 function Rig({
   radius,
@@ -44,13 +87,14 @@ function Rig({
   intro: boolean
   bottomInset: number
 }) {
-  const camera = useThree((state) => state.camera)
   const size = useThree((state) => state.size)
   const angle = useRef(0)
   const elapsed = useRef(intro ? 0 : INTRO_SECONDS)
   const parallax = useRef({ x: 0, y: 0 })
 
-  useFrame(({ pointer }, rawDelta) => {
+  useFrame((state, rawDelta) => {
+    const { pointer } = state
+    const camera = state.camera as PerspectiveCamera
     const delta = Math.min(rawDelta, 0.1)
     elapsed.current += delta
     if (spinning) angle.current += delta * 0.07
@@ -60,35 +104,34 @@ function Rig({
     parallax.current.y = MathUtils.damp(parallax.current.y, intro ? pointer.y : 0, 2.5, delta)
 
     const aspect = size.width / Math.max(size.height, 1)
-    const fit = cameraDistance(radius, aspect)
-    const distance = fit * (1 + (1 - p) * 0.6)
-    const elevation = 0.17 + (1 - p) * 0.6 + parallax.current.y * 0.04
-    const theta = angle.current - (1 - p) * 1.1 + parallax.current.x * 0.12
-    camera.position.set(
-      Math.sin(theta) * distance * Math.cos(elevation),
-      1.1 + distance * Math.sin(elevation),
-      Math.cos(theta) * distance * Math.cos(elevation),
-    )
+    const fov = MathUtils.lerp(INTRO_FOV, cameraFov(aspect), p)
+    if (Math.abs(camera.fov - fov) > 0.01) {
+      camera.fov = fov
+      camera.updateProjectionMatrix()
+    }
+    const distance = cameraDistance(radius) * (1 + (1 - p) * 2.2)
+    const height = CAMERA_HEIGHT + (1 - p) * 9 + parallax.current.y * 0.12
+    const theta = angle.current - (1 - p) * 1.1 + parallax.current.x * 0.1
+    camera.position.set(Math.sin(theta) * distance, height, Math.cos(theta) * distance)
     // Se in basso c'è qualcosa sopra la scena (il pannello di accesso), l'inquadratura sale
     // di metà di quello spazio: albero e omini restano nella parte libera.
-    const inset = (bottomInset / Math.max(size.height, 1)) * 0.5 * distance * 2 * Math.tan(MathUtils.degToRad(FOV / 2))
-    camera.lookAt(0, TREE_TOP * 0.45 + lookAtLift(radius, aspect) - inset + (1 - p) * 1.2, 0)
+    const span = 2 * distance * Math.tan(MathUtils.degToRad(fov / 2))
+    const inset = (bottomInset / Math.max(size.height, 1)) * 0.5 * span
+    camera.lookAt(0, lookHeight(fov) - inset + (1 - p) * 1.5, 0)
   })
   return null
 }
 
 /**
- * Nebbia e paesaggio seguono la camera: con un formato alto (telefono) o tanta gente
- * la camera si allontana, e bosco e foschia si allontanano con lei.
+ * Nebbia e paesaggio seguono la camera: con tanta gente il cerchio si allarga, la camera
+ * si allontana, e bosco e foschia si allontanano con lei.
  */
 function Scenery({ radius, rich, animate }: { radius: number; rich: boolean; animate: boolean }) {
-  const size = useThree((state) => state.size)
-  const aspect = size.width / Math.max(size.height, 1)
-  const distance = cameraDistance(radius, aspect)
+  const distance = cameraDistance(radius)
   return (
     <>
-      <fog attach="fog" args={[HORIZON, distance + 4, distance + 46]} />
-      <Landscape rich={rich} animate={animate} scale={sceneryScale(radius, aspect)} />
+      <fog attach="fog" args={[HORIZON, distance + 9, distance + 52]} />
+      <Landscape rich={rich} animate={animate} scale={sceneryScale(radius)} />
     </>
   )
 }
@@ -110,7 +153,12 @@ function useOnScreen<T extends Element>(ref: React.RefObject<T | null>) {
   useEffect(() => {
     const element = ref.current
     if (!element || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
+    // La parte coperta dall'header sticky non conta: sul telefono lo snap lascia lì sotto il fondo
+    // della scena, e senza questo margine il WebGL continuerebbe a disegnare mentre leggi la pagina.
+    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ss-header-h')) || 0
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), {
+      rootMargin: `${-Math.ceil(header + 1)}px 0px 0px 0px`,
+    })
     observer.observe(element)
     return () => observer.disconnect()
   }, [ref])
@@ -126,9 +174,14 @@ export default function ChristmasScene({
   const container = useRef<HTMLDivElement>(null)
   const visible = useOnScreen(container)
   const [reduced] = useState(prefersReducedMotion)
-  const [dpr, setDpr] = useState(1.5)
+  const [dpr, setDpr] = useState(MAX_DPR)
   // Su dispositivi in affanno si rinuncia a ombre, MSAA e a un po' di dettaglio, non alla magia.
   const [rich, setRich] = useState(true)
+  const [monitoring, setMonitoring] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setMonitoring(true), MONITOR_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const radius = ringRadius(participants.length)
@@ -147,16 +200,29 @@ export default function ChristmasScene({
         dpr={[1, dpr]}
         shadows={rich}
         frameloop={!visible ? 'never' : animate ? 'always' : 'demand'}
-        camera={{ fov: FOV, near: 0.1, far: 160, position: [0, 5, 16] }}
+        camera={{ fov: INTRO_FOV, near: 0.05, far: 160, position: [0, 9, 16] }}
+        events={wideLensEvents}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
         onPointerMissed={() => setSelectedId(null)}
       >
-        <PerformanceMonitor
-          onDecline={() => {
-            setDpr(1)
-            setRich(false)
-          }}
-        />
+        {/* La risoluzione segue gli fps a piccoli passi (e risale se c'è margine); ombre e MSAA si
+            spengono solo se il telefono fatica anche alla risoluzione più bassa. */}
+        {monitoring && (
+          <PerformanceMonitor
+            factor={1}
+            step={0.2}
+            flipflops={4}
+            onChange={({ factor }) =>
+              setDpr(Math.round((MIN_DPR + (MAX_DPR - MIN_DPR) * factor) * 4) / 4)
+            }
+            onDecline={({ factor }) => {
+              if (factor < 0.05) setRich(false)
+            }}
+            onFallback={({ factor }) => {
+              if (factor < 0.5) setRich(false)
+            }}
+          />
+        )}
         <color attach="background" args={[HORIZON]} />
 
         <hemisphereLight args={['#9db8ff', '#3a2a24', 0.75]} />
@@ -194,6 +260,7 @@ export default function ChristmasScene({
         <Ground radius={radius} animate={animate} rich={rich} />
         <Tree animate={animate} />
         <Sparkles
+          ref={clampSparkleAlpha}
           count={rich ? 70 : 40}
           scale={[5.5, TREE_TOP + 1, 5.5]}
           position={[0, (TREE_TOP + 1) / 2, 0]}
@@ -219,6 +286,10 @@ export default function ChristmasScene({
           <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={1.15} radius={0.75} />
           <Vignette offset={0.28} darkness={0.55} />
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+          {/* grana da pellicola, dopo il tone mapping: si vede nei mezzitoni, non sporca i neri */}
+          <Noise blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.15} />
+          {/* obiettivo grandangolare: tutto il fotogramma si curva verso i bordi */}
+          <Barrel />
         </EffectComposer>
       </Canvas>
 

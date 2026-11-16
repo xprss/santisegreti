@@ -11,22 +11,26 @@ from app.models import User
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
+async def user_from_session(token: str | None, settings: Settings) -> User | None:
+    """L'utente del cookie di sessione, oppure None (serve anche al WebSocket della lotteria)."""
+    if not token:
+        return None
+    user_id = read_session_token(token, settings)
+    if not user_id:
+        return None
+    try:
+        return await User.get(PydanticObjectId(user_id))
+    except InvalidId:
+        return None
+
+
 async def current_user(
     settings: SettingsDep,
     session: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None,
 ) -> User:
-    unauthorized = HTTPException(status.HTTP_401_UNAUTHORIZED, "Serve fare l'accesso.")
-    if not session:
-        raise unauthorized
-    user_id = read_session_token(session, settings)
-    if not user_id:
-        raise unauthorized
-    try:
-        user = await User.get(PydanticObjectId(user_id))
-    except InvalidId:
-        user = None
+    user = await user_from_session(session, settings)
     if user is None:
-        raise unauthorized
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Serve fare l'accesso.")
     return user
 
 

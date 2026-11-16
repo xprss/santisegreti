@@ -18,6 +18,8 @@ export interface UserPublic {
 
 export interface Me extends UserPublic {
   email: string
+  /** Accessori speciali vinti (per ora: la tunica della lotteria). */
+  unlocked_accessories: AccessoryId[]
 }
 
 export interface RoomSummary {
@@ -64,4 +66,25 @@ export interface RedeemResult {
 
 export interface MyAssignment {
   receiver: UserPublic | null
+}
+
+/** `countdown`: estratta, ma il vincitore si scopre solo a fine conto alla rovescia. */
+export type LotteryStatus = 'draft' | 'open' | 'countdown' | 'drawn'
+
+export interface LotteryTicket {
+  number: string
+  taken_at: string
+}
+
+export interface Lottery {
+  status: LotteryStatus
+  prize: AccessoryId
+  ticket_count: number
+  ticket_holder_ids: string[]
+  my_ticket: LotteryTicket | null
+  /** Millisecondi alla rivelazione, contati dal server (solo durante il countdown). */
+  countdown_ms: number | null
+  winner: { user: UserPublic; number: string } | null
+  opened_at: string | null
+  drawn_at: string | null
 }

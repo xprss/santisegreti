@@ -1,0 +1,26 @@
+/*
+ * Cifre del testo in pixel: Pixelify Sans disegna 5 e 2 quasi come S e Z, e sui numeri dei
+ * biglietti non si legge. Solo le cifre (unicode-range) arrivano da Silkscreen, il resto resta
+ * Pixelify: `font-family: 'Pixel Digits', 'Pixelify Sans'`.
+ */
+@font-face {
+  font-family: 'Pixel Digits';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../../node_modules/@fontsource/silkscreen/files/silkscreen-latin-400-normal.woff2')
+    format('woff2');
+  unicode-range: U+0030-0039;
+  size-adjust: 112%;
+}
+
+@font-face {
+  font-family: 'Pixel Digits';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../../node_modules/@fontsource/silkscreen/files/silkscreen-latin-700-normal.woff2')
+    format('woff2');
+  unicode-range: U+0030-0039;
+  size-adjust: 112%;
+}

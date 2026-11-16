@@ -2,7 +2,18 @@ import { useState } from 'react'
 import { Alert, Card, Container, ListGroup, Stack } from 'react-bootstrap'
 import { Button } from '../components/Button'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
-import { useDeleteRoom, useDraw, useRemoveParticipant, useRoom, useUpdateRoom } from '../api/hooks'
+import {
+  useCreateLottery,
+  useDeleteLottery,
+  useDeleteRoom,
+  useDraw,
+  useDrawLottery,
+  useLottery,
+  useOpenLottery,
+  useRemoveParticipant,
+  useRoom,
+  useUpdateRoom,
+} from '../api/hooks'
 import type { RoomDetail } from '../api/types'
 import { ExclusionsCard } from '../components/ExclusionsCard'
 import { Confirm, ErrorAlert, Loading } from '../components/feedback'
@@ -12,6 +23,7 @@ import { RoomForm } from '../components/RoomForm'
 import { formatTimestamp, plural } from '../lib/format'
 
 const MIN_PARTICIPANTS = 3
+const MIN_TICKETS = 2
 
 export function ManageRoom() {
   const { id = '' } = useParams()
@@ -37,6 +49,7 @@ export function ManageRoom() {
         <ParticipantsCard room={data} />
         <ExclusionsCard room={data} />
         <DrawCard room={data} />
+        <LotteryCard room={data} />
         <DetailsCard room={data} />
         <DeleteCard room={data} />
       </Stack>
@@ -154,6 +167,104 @@ function DrawCard({ room }: { room: RoomDetail }) {
             `, con ${plural(room.exclusion_groups.length, 'gruppo', 'gruppi')} di esclusione`}
           . Ognuno riceverà il nome di una persona a cui fare il regalo.
         </Confirm>
+      </Card.Body>
+    </Card>
+  )
+}
+
+/** La lotteria della stanza: una sola, si crea in bozza, si apre e poi si estrae in diretta. */
+function LotteryCard({ room }: { room: RoomDetail }) {
+  const lottery = useLottery(room.id)
+  const create = useCreateLottery(room.id)
+  const open = useOpenLottery(room.id)
+  const remove = useDeleteLottery(room.id)
+  const draw = useDrawLottery(room.id)
+  const navigate = useNavigate()
+  const data = lottery.data
+
+  const cancel = (
+    <Confirm
+      title="Eliminare la lotteria?"
+      confirmLabel="Sì, eliminala"
+      variant="danger"
+      onConfirm={() => remove.mutateAsync()}
+      trigger={(show) => (
+        <Button variant="outline-danger" onClick={show}>
+          Elimina la lotteria
+        </Button>
+      )}
+    >
+      {data?.ticket_count
+        ? `I ${data.ticket_count} biglietti già presi spariscono. `
+        : ''}
+      Potrai crearne un'altra, finché non estrai.
+    </Confirm>
+  )
+
+  return (
+    <Card>
+      <Card.Body>
+        <h2 className="h5">Lotteria</h2>
+        <ErrorAlert error={lottery.error || create.error || open.error} />
+        {lottery.isPending ? null : !data ? (
+          <>
+            <p className="text-body-secondary">
+              Una lotteria per stanza, con un premio speciale che non si trova da nessun'altra
+              parte. Nasce chiusa: la vedi solo tu finché non la apri.
+            </p>
+            <div className="d-grid d-sm-flex">
+              <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                Crea la lotteria
+              </Button>
+            </div>
+          </>
+        ) : data.status === 'draft' ? (
+          <>
+            <p className="text-body-secondary">
+              È pronta ma ancora chiusa. Quando la apri, tutti possono prendere il biglietto.
+            </p>
+            <div className="d-grid d-sm-flex gap-2">
+              <Button onClick={() => open.mutate()} disabled={open.isPending}>
+                Apri ai partecipanti
+              </Button>
+              {cancel}
+            </div>
+          </>
+        ) : data.status === 'open' ? (
+          <>
+            <p className="text-body-secondary">
+              {plural(data.ticket_count, 'biglietto preso', 'biglietti presi')}.{' '}
+              {data.ticket_count >= MIN_TICKETS
+                ? "Quando lanci l'estrazione parte un conto alla rovescia in diretta per chi ha la stanza aperta."
+                : `Per estrarre servono almeno ${MIN_TICKETS} biglietti.`}
+            </p>
+            <div className="d-grid d-sm-flex gap-2">
+              <Confirm
+                title="Estraiamo la lotteria?"
+                confirmLabel="Sì, via al conto alla rovescia"
+                onConfirm={() => draw.mutateAsync().then(() => navigate(`/stanze/${room.id}`))}
+                trigger={(show) => (
+                  <Button onClick={show} disabled={data.ticket_count < MIN_TICKETS}>
+                    Estrai il vincitore
+                  </Button>
+                )}
+              >
+                Da adesso non si prendono più biglietti. Parte un conto alla rovescia uguale per
+                tutti i collegati, poi il vincitore compare a tutti insieme. Non si torna indietro.
+              </Confirm>
+              {cancel}
+            </div>
+          </>
+        ) : data.status === 'countdown' ? (
+          <p className="mb-0">
+            Estrazione in corso: <Link to={`/stanze/${room.id}`}>guardala nella stanza</Link>.
+          </p>
+        ) : (
+          <p className="mb-0">
+            Estratta{data.drawn_at ? ` il ${formatTimestamp(data.drawn_at)}` : ''}: ha vinto{' '}
+            <strong>{data.winner?.user.name}</strong> con il biglietto {data.winner?.number}.
+          </p>
+        )}
       </Card.Body>
     </Card>
   )

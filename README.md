@@ -17,6 +17,15 @@ Il Secret Santa per amici, famiglie e colleghi: stanze segrete su invito, estraz
 - L'estrazione produce una catena unica (A → B → C → … → A) quando le esclusioni lo permettono, altrimenti un abbinamento valido qualsiasi. Ognuno vede solo la persona a cui fa il regalo, admin compreso.
 - L'admin può annullare l'estrazione e rifarla. Ingressi, uscite e modifiche alle esclusioni sono possibili solo prima dell'estrazione.
 
+### Lotteria
+
+- Ogni stanza ha al massimo **una lotteria**. L'admin la crea (nasce in bozza e finché resta così la vede solo l'admin), la apre e poi la estrae. Prima dell'estrazione può eliminarla; dopo è definitiva.
+- Ognuno, admin compreso, prende un biglietto `SANTO-XXXXXX`: premendo "Prendi un biglietto" il biglietto esce da sotto il box della lotteria (sopra le polaroid) e poi sale a prenderne il posto. Il premio resta una sorpresa fino all'estrazione.
+- Sulle polaroid si vede chi ha il biglietto (il numero solo chi lo possiede) e chi ha la stanza aperta in quel momento.
+- L'estrazione è **in diretta**: il server sceglie subito il vincitore ma lo tiene segreto, a tutti i collegati parte lo stesso conto alla rovescia di 10 secondi (`LOTTERY_COUNTDOWN_SECONDS`) e a zero il vincitore arriva a tutti insieme dal WebSocket `/api/rooms/{id}/lottery/ws`. Servono almeno 2 biglietti.
+- Il premio di quest'anno è la **tunica di fiori**, un accessorio speciale che si sblocca solo vincendo (`special: true` nel catalogo, `SPECIAL_ACCESSORIES` nel backend). Chi vince se la trova addosso a fine countdown (non prima, per non svelare il vincitore) e poi può cambiarla dal profilo come gli altri accessori; agli altri compare bloccata, senza svelare cos'è.
+- Il WebSocket tiene le connessioni in memoria: funziona perché l'app gira in un solo processo uvicorn. Con più worker o repliche servirebbe un canale condiviso (change stream di Mongo, pub/sub).
+
 ## Sviluppo locale
 
 Servono Docker e Docker Compose.
@@ -72,6 +81,8 @@ Gira su https://santisegreti.hexaquot.it (`www.` rimanda lì), sulla stessa macc
 | Configurazione runtime | `/etc/santisegreti/production.env` (root:jenkins, 0640), vedi sotto |
 | Reverse proxy e TLS | `/etc/nginx/conf.d/santisegreti.hexaquot.it.conf` (copia in [`deploy/`](deploy/nginx-santisegreti.hexaquot.it.conf)), certificato Let's Encrypt via webroot |
 | Job Jenkins | `santisegreti-deploy`, pipeline [`deploy/Jenkinsfile`](deploy/Jenkinsfile) letta da `main` (config in [`deploy/jenkins-job.xml`](deploy/jenkins-job.xml)) |
+
+**WebSocket della lotteria:** nginx deve inoltrare l'`Upgrade` su `/api/rooms/{id}/lottery/ws` (vedi la `location` dedicata nella [copia della configurazione](deploy/nginx-santisegreti.hexaquot.it.conf)). Il file sul server va aggiornato a mano (`sudo nginx -t && sudo systemctl reload nginx`) **prima** che la lotteria arrivi su `main`, perché il push fa partire il deploy. Senza, le pagine funzionano lo stesso ma l'estrazione non è in diretta.
 
 `production.env` contiene `MONGO_URI`, `MONGO_DB`, `GOOGLE_CLIENT_ID` e `SESSION_SECRET` (almeno 32 caratteri: `openssl rand -hex 32`), una riga `KEY=valore` ciascuno e **senza virgolette** (lo legge `docker --env-file`). `DEV_LOGIN=false` e `COOKIE_SECURE=true` li forza lo script di deploy. Nella console Google, l'ID client deve avere `https://santisegreti.hexaquot.it` tra le origini JavaScript autorizzate.
 
