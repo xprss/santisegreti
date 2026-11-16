@@ -64,9 +64,10 @@ body.ss-no-scroll {
   background: #d0473f;
   color: #fff;
   font-family: $ss-pixel-font;
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 4.3vw, 1.1rem);
   font-weight: 700;
   letter-spacing: 0.04em;
+  white-space: nowrap;
   box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.25), inset 3px 3px 0 rgba(255, 255, 255, 0.3);
   transition: transform 0.08s steps(2);
 
