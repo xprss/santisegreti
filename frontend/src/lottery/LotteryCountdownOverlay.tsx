@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { CloseButton } from 'react-bootstrap'
-import { Link } from 'react-router'
 import { accessoryLabel } from '../accessories/catalog'
 import { keys } from '../api/hooks'
 import type { Lottery, Me } from '../api/types'
@@ -176,10 +175,8 @@ export function LotteryCountdownOverlay({ roomId, me, lottery, online }: Overlay
               <p className="ss-draw-prize">
                 {mine ? (
                   <>
-                    La {accessoryLabel(lottery.prize).toLowerCase()} è tua!{' '}
-                    <Link to="/profilo" onClick={close}>
-                      Indossala dal profilo
-                    </Link>
+                    La {accessoryLabel(lottery.prize).toLowerCase()} è tua, e ce l'hai già
+                    addosso!
                   </>
                 ) : (
                   `si porta a casa la ${accessoryLabel(lottery.prize).toLowerCase()}`

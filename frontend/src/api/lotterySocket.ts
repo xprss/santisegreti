@@ -43,9 +43,13 @@ export function useLotterySocket(roomId: string, meId: string): Set<string> {
         }
         const previous = client.getQueryData<Lottery | null>(keys.lottery(roomId))
         client.setQueryData(keys.lottery(roomId), message.lottery)
-        // Appena si scopre di aver vinto, il profilo deve vedere il premio sbloccato.
-        if (message.lottery?.winner?.user.id === meId && !previous?.winner) {
-          client.invalidateQueries({ queryKey: keys.me })
+        if (message.lottery?.winner && !previous?.winner) {
+          // Il vincitore ha appena indossato il premio: polaroid e scena devono vederlo.
+          client.invalidateQueries({ queryKey: keys.room(roomId), exact: true })
+          // E se ho vinto io, il mio profilo lo trova sbloccato e addosso.
+          if (message.lottery.winner.user.id === meId) {
+            client.invalidateQueries({ queryKey: keys.me })
+          }
         }
       }
       ws.onclose = (event) => {

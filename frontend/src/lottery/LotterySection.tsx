@@ -108,13 +108,14 @@ function LotteryResult({ lottery, me }: { lottery: Lottery; me: Me }) {
         <Gingerbread color={winner.user.color} accessory={lottery.prize} size={104} />
       </div>
       <div className="ss-lottery-result-body">
-        <p className="ss-pixel-small mb-1">{mine ? 'HAI VINTO TU!' : 'LA LOTTERIA È DI…'}</p>
+        <p className="ss-pixel-small mb-1">{mine ? 'HAI VINTO TU!' : 'LA LOTTERIA È STATA VINTA DA'}</p>
         <h3 className="ss-lottery-result-name">{mine ? `${winner.user.name}!` : winner.user.name}</h3>
         <TicketStamp number={winner.number} className="ss-stamp--small" />
         <p className="mt-2 mb-0">
           {mine ? (
             <>
-              La {prize} è tua. <Link to="/profilo">Indossala dal profilo</Link>
+              La {prize} è tua, e ce l'hai già addosso! Se vuoi cambiarla, vai al{' '}
+              <Link to="/profilo">profilo</Link>.
             </>
           ) : (
             <>

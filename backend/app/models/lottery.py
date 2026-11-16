@@ -37,6 +37,9 @@ class Lottery(Document):
     reveal_at: datetime | None = None
     winner_user_id: PydanticObjectId | None = None
     winner_number: str | None = None
+    # Il premio finisce addosso al vincitore una volta sola, a countdown finito
+    # (prima si vedrebbe sull'omino e svelerebbe chi ha vinto).
+    prize_worn: bool = False
 
     class Settings:
         name = "lotteries"

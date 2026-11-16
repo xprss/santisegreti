@@ -69,5 +69,30 @@ def lottery_view(
 async def lottery_for(room: Room, user: User) -> LotteryOut | None:
     now = utcnow()
     lottery = await Lottery.find_one(Lottery.room_id == room.id)
+    # Se il task della rivelazione non è partito (riavvio proprio a zero), ci pensa chi guarda.
+    if lottery and lottery_phase(lottery, now) == "drawn" and not lottery.prize_worn:
+        await wear_prize_if_revealed(lottery.id)
     winner = await load_winner(lottery, now) if lottery else None
     return lottery_view(lottery, room, user.id, now, winner)
+
+
+async def wear_prize_if_revealed(lottery_id: PydanticObjectId) -> bool:
+    """A countdown finito mette il premio addosso al vincitore, una volta sola.
+
+    Dopo, se il vincitore si cambia d'abito dal profilo, resta la sua scelta.
+    """
+    claimed = await Lottery.get_pymongo_collection().find_one_and_update(
+        {
+            "_id": lottery_id,
+            "status": LotteryStatus.DRAWN.value,
+            "prize_worn": {"$ne": True},
+            "reveal_at": {"$lte": utcnow()},
+        },
+        {"$set": {"prize_worn": True}},
+    )
+    if claimed is None or claimed.get("winner_user_id") is None:
+        return False
+    await User.get_pymongo_collection().update_one(
+        {"_id": claimed["winner_user_id"]}, {"$set": {"accessory": claimed["prize"]}}
+    )
+    return True

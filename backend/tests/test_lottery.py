@@ -88,7 +88,8 @@ async def test_lottery_lifecycle(login):
         assert lottery["status"] == "countdown"
         assert 0 < lottery["countdown_ms"] <= 10_000
         assert lottery["winner"] is None
-        assert (await viewer.get("/api/me")).json()["unlocked_accessories"] == []
+        me = (await viewer.get("/api/me")).json()
+        assert me["unlocked_accessories"] == [] and me["accessory"] is None
 
     late = await anna.post(f"{url}/tickets")
     assert late.status_code == 409 and "partita" in late.json()["detail"]
@@ -119,12 +120,18 @@ async def test_reveal_unlocks_the_prize(login, countdown):
     assert (await winner.get("/api/me")).json()["unlocked_accessories"] == ["flower_tunic"]
     assert (await loser.get("/api/me")).json()["unlocked_accessories"] == []
 
-    # Vinta, non indossata: la mette chi vuole, e solo chi l'ha vinta.
-    assert (await winner.get("/api/me")).json()["accessory"] is None
-    refused = await loser.patch("/api/me", json={"accessory": "flower_tunic"})
-    assert refused.status_code == 403 and "lotteria" in refused.json()["detail"]
+    # A countdown finito il vincitore se la trova addosso, e la vedono tutti nella stanza.
+    assert (await winner.get("/api/me")).json()["accessory"] == "flower_tunic"
+    people = {p["id"]: p for p in (await loser.get(f"/api/rooms/{room_id}")).json()["participants"]}
+    assert people[winner_id]["accessory"] == "flower_tunic"
+    assert people[loser.me["id"]]["accessory"] is None
+
+    # Poi può cambiarsela e rimettersela; chi non l'ha vinta, no.
+    assert (await winner.patch("/api/me", json={"accessory": "scarf"})).status_code == 200
     worn = await winner.patch("/api/me", json={"accessory": "flower_tunic"})
     assert worn.status_code == 200 and worn.json()["accessory"] == "flower_tunic"
+    refused = await loser.patch("/api/me", json={"accessory": "flower_tunic"})
+    assert refused.status_code == 403 and "lotteria" in refused.json()["detail"]
 
     # Il premio resta anche se la stanza sparisce.
     assert (await anna.delete(f"/api/rooms/{room_id}")).status_code == 204

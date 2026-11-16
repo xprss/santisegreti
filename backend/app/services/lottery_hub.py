@@ -16,7 +16,7 @@ from fastapi import Depends, Request, WebSocket
 
 from app.models import Lottery, LotteryStatus, Room
 from app.models.user import utcnow
-from app.services.lottery import load_winner, lottery_view
+from app.services.lottery import load_winner, lottery_view, wear_prize_if_revealed
 
 log = logging.getLogger(__name__)
 
@@ -129,14 +129,19 @@ class LotteryHub:
         while (left := (reveal_at - utcnow()).total_seconds()) > 0:
             await asyncio.sleep(left + 0.005)
         try:
+            lottery = await Lottery.find_one(Lottery.room_id == room_id)
+            if lottery is not None:
+                await wear_prize_if_revealed(lottery.id)
             await self.broadcast_lottery(room_id)
         except Exception:
             log.exception("Rivelazione della lotteria non inviata (stanza %s)", room_id)
 
     async def resume_pending(self) -> None:
-        """Dopo un riavvio: i countdown ancora in corso devono comunque arrivare a zero."""
+        """Dopo un riavvio: i countdown ancora in corso devono comunque arrivare a zero, e chi
+        ha vinto mentre il server era giù deve trovarsi comunque il premio addosso."""
         pending = await Lottery.find(
-            Lottery.status == LotteryStatus.DRAWN, Lottery.reveal_at > utcnow()
+            Lottery.status == LotteryStatus.DRAWN,
+            Lottery.prize_worn != True,  # noqa: E712
         ).to_list()
         for lottery in pending:
             if lottery.reveal_at is not None:

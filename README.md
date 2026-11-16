@@ -23,7 +23,7 @@ Il Secret Santa per amici, famiglie e colleghi: stanze segrete su invito, estraz
 - Ognuno, admin compreso, prende un biglietto `SANTO-XXXXXX`: un dialogo in pixel chiede conferma, la macchinetta lo stampa, si strappa e vola nella sezione sopra le polaroid. Il premio resta una sorpresa fino all'estrazione.
 - Sulle polaroid si vede chi ha il biglietto (il numero solo chi lo possiede) e chi ha la stanza aperta in quel momento.
 - L'estrazione è **in diretta**: il server sceglie subito il vincitore ma lo tiene segreto, a tutti i collegati parte lo stesso conto alla rovescia di 10 secondi (`LOTTERY_COUNTDOWN_SECONDS`) e a zero il vincitore arriva a tutti insieme dal WebSocket `/api/rooms/{id}/lottery/ws`. Servono almeno 2 biglietti.
-- Il premio di quest'anno è la **tunica di fiori**, un accessorio speciale che si sblocca solo vincendo (`special: true` nel catalogo, `SPECIAL_ACCESSORIES` nel backend). Chi vince la trova nel profilo e la indossa se vuole; agli altri compare bloccata, senza svelare cos'è.
+- Il premio di quest'anno è la **tunica di fiori**, un accessorio speciale che si sblocca solo vincendo (`special: true` nel catalogo, `SPECIAL_ACCESSORIES` nel backend). Chi vince se la trova addosso a fine countdown (non prima, per non svelare il vincitore) e poi può cambiarla dal profilo come gli altri accessori; agli altri compare bloccata, senza svelare cos'è.
 - Il WebSocket tiene le connessioni in memoria: funziona perché l'app gira in un solo processo uvicorn. Con più worker o repliche servirebbe un canale condiviso (change stream di Mongo, pub/sub).
 
 ## Sviluppo locale
