@@ -69,7 +69,7 @@ export function LotterySection({ room, me, lottery }: LotterySectionProps) {
           <div className="ss-lottery-invite-body">
             <p className="ss-pixel-text mb-3">Partecipa alla Lotteria di Natale!!!</p>
             <button type="button" className="ss-pixel-button" onClick={() => setTearing(true)}>
-              <span aria-hidden>▶ </span>PRENDI UN BIGLIETTO
+              <span aria-hidden>▶</span>PRENDI UN BIGLIETTO
             </button>
           </div>
         </div>
