@@ -56,7 +56,7 @@ export function RoomForm({ initial, submitLabel, busy, onSubmit }: RoomFormProps
       </Form.Group>
 
       <Form.Group className="mb-3" controlId="room-theme">
-        <Form.Label className="fw-semibold">Un tema, se vi va</Form.Label>
+        <Form.Label className="fw-semibold">Un tema, se siete tutti d'accordo</Form.Label>
         <Form.Control
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
