@@ -4,6 +4,7 @@ import re
 import pytest
 
 from app.config import get_settings
+from tests.conftest import WebSocketClosed
 from tests.test_api import create_room, invite_and_join
 
 TICKET = re.compile(r"^SANTO-\d{6}$")
@@ -154,3 +155,75 @@ async def test_special_accessory_is_locked(login):
     assert anna.me["unlocked_accessories"] == []
     response = await anna.patch("/api/me", json={"accessory": "flower_tunic"})
     assert response.status_code == 403
+
+
+async def test_websocket_live_draw(login, lottery_ws, countdown):
+    countdown(0.3)
+    room_id, (anna, bruno, carla) = await room_with(login, "Anna", "Bruno", "Carla")
+    url = await open_lottery(anna, room_id)
+
+    async with lottery_ws(anna, room_id) as anna_ws, lottery_ws(bruno, room_id) as bruno_ws:
+        assert (await anna_ws.next("lottery"))["lottery"]["status"] == "open"
+        assert (await bruno_ws.next("lottery"))["lottery"]["status"] == "open"
+        online = (await anna_ws.next("presence"))["online"]
+        if online == [anna.me["id"]]:
+            online = (await anna_ws.next("presence"))["online"]
+        assert online == [anna.me["id"], bruno.me["id"]]
+
+        # Il biglietto di Bruno arriva a tutti, ma il numero solo a lui.
+        number = (await bruno.post(f"{url}/tickets")).json()["my_ticket"]["number"]
+        seen_by_anna = (await anna_ws.next("lottery"))["lottery"]
+        seen_by_bruno = (await bruno_ws.next("lottery"))["lottery"]
+        assert seen_by_anna["ticket_holder_ids"] == [bruno.me["id"]]
+        assert seen_by_anna["my_ticket"] is None
+        assert seen_by_bruno["my_ticket"]["number"] == number
+
+        await carla.post(f"{url}/tickets")
+        await anna_ws.next("lottery")
+        await bruno_ws.next("lottery")
+
+        # Estrazione: prima il countdown senza vincitore, poi la rivelazione per tutti.
+        assert (await anna.post(f"{url}/draw")).status_code == 200
+        reveals = []
+        for ws in (anna_ws, bruno_ws):
+            started = (await ws.next("lottery"))["lottery"]
+            assert started["status"] == "countdown" and started["winner"] is None
+            assert started["countdown_ms"] > 0
+        for ws in (anna_ws, bruno_ws):
+            reveal = (await ws.next("lottery"))["lottery"]
+            assert reveal["status"] == "drawn"
+            reveals.append(reveal["winner"])
+        assert reveals[0] == reveals[1]
+        assert reveals[0]["user"]["id"] in {bruno.me["id"], carla.me["id"]}
+
+        # Chi arriva dopo trova subito il risultato; chi se ne va sparisce dalla presenza.
+        async with lottery_ws(carla, room_id) as carla_ws:
+            assert (await carla_ws.next("lottery"))["lottery"]["winner"] == reveals[0]
+        online = (await anna_ws.next("presence"))["online"]
+        while carla.me["id"] in online:
+            online = (await anna_ws.next("presence"))["online"]
+        assert online == [anna.me["id"], bruno.me["id"]]
+
+
+async def test_websocket_refuses_strangers(login, lottery_ws):
+    room_id, (anna, bruno) = await room_with(login, "Anna", "Bruno")
+    dario = await login("Dario")
+
+    async def close_code(client, origin: str | None = "http://test") -> int:
+        with pytest.raises(WebSocketClosed) as closed:
+            async with lottery_ws(client, room_id, origin) as ws:
+                await ws.receive_json()
+        return closed.value.code
+
+    assert await close_code(None) == 4401
+    assert await close_code(dario) == 4404
+    assert await close_code(anna, origin="https://altro-sito.example") == 4403
+
+    # Chi viene fatto uscire dalla stanza perde anche il collegamento.
+    async with lottery_ws(bruno, room_id) as bruno_ws:
+        await bruno_ws.next("presence")
+        kick = await anna.delete(f"/api/rooms/{room_id}/participants/{bruno.me['id']}")
+        assert kick.status_code == 204
+        with pytest.raises(WebSocketClosed) as closed:
+            await bruno_ws.next("never")
+        assert closed.value.code == 4404

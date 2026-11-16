@@ -51,7 +51,8 @@ export default defineConfig({
     host: true,
     port: 5173,
     proxy: {
-      '/api': { target: apiProxy, changeOrigin: false },
+      // ws: il WebSocket della lotteria passa dallo stesso proxy.
+      '/api': { target: apiProxy, changeOrigin: false, ws: true },
     },
   },
   css: {

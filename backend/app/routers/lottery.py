@@ -1,17 +1,25 @@
 import secrets
 from datetime import timedelta
+from urllib.parse import urlsplit
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status
 from pymongo.errors import DuplicateKeyError
 
-from app.auth.deps import CurrentUser, SettingsDep
+from app.auth.deps import CurrentUser, SettingsDep, user_from_session
+from app.auth.session import COOKIE_NAME
 from app.models import Lottery, LotteryStatus, Room, Ticket, User
 from app.models.user import utcnow
 from app.routers.common import load_room_for_admin, load_room_for_member
 from app.schemas import LotteryOut
 from app.services.lottery import MIN_TICKETS, lottery_for, new_ticket_number
-from app.services.lottery_hub import LotteryHubDep
+from app.services.lottery_hub import (
+    CLOSE_FORBIDDEN_ORIGIN,
+    CLOSE_NOT_A_MEMBER,
+    CLOSE_UNAUTHORIZED,
+    LotteryHub,
+    LotteryHubDep,
+)
 
 router = APIRouter(prefix="/rooms/{room_id}/lottery", tags=["lottery"])
 
@@ -181,3 +189,42 @@ async def draw_lottery(
     hub.schedule_reveal(room.id, reveal_at)
     await hub.broadcast_lottery(room.id)
     return await lottery_out(room, user)
+
+
+def _same_origin(websocket: WebSocket) -> bool:
+    # Il browser manda sempre Origin: un'altra pagina non deve poter aprire il socket con i
+    # nostri cookie. Senza Origin (client non browser) il cookie va comunque presentato.
+    origin = websocket.headers.get("origin")
+    if origin is None:
+        return True
+    return urlsplit(origin).netloc == websocket.headers.get("host")
+
+
+@router.websocket("/ws")
+async def lottery_socket(
+    websocket: WebSocket, room_id: PydanticObjectId, settings: SettingsDep
+) -> None:
+    """Solo dal server al client: messaggi `lottery` (stato per chi guarda) e `presence`."""
+    hub: LotteryHub = websocket.app.state.lottery_hub
+    await websocket.accept()
+    if not _same_origin(websocket):
+        await websocket.close(CLOSE_FORBIDDEN_ORIGIN)
+        return
+    user = await user_from_session(websocket.cookies.get(COOKIE_NAME), settings)
+    if user is None:
+        await websocket.close(CLOSE_UNAUTHORIZED)
+        return
+    room = await Room.get(room_id)
+    if room is None or user.id not in room.participant_ids:
+        await websocket.close(CLOSE_NOT_A_MEMBER)
+        return
+
+    await hub.connect(room.id, websocket, user.id)
+    try:
+        # I messaggi del client non servono: leggere serve solo ad accorgersi della chiusura.
+        while (await websocket.receive())["type"] != "websocket.disconnect":
+            pass
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
+        await hub.disconnect(room.id, websocket)
