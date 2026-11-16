@@ -16,7 +16,7 @@ import {
   TubeGeometry,
   Vector3,
 } from 'three'
-import { glowTexture, raysTexture } from './glow'
+import { glareTexture, glintTexture, glowTexture, streakTexture } from './glow'
 import { seeded } from './random'
 
 /** Palchi dell'abete, dal basso: base, raggio, altezza, numero di punte. */
@@ -28,6 +28,8 @@ const TIERS = [
   { y: 3.8, r: 0.68, h: 1.15, tips: 7 },
 ]
 export const TREE_TOP = TIERS[TIERS.length - 1].y + TIERS[TIERS.length - 1].h
+/** Quota della stella: da qui partono glare e riflessi dell'obiettivo. */
+export const STAR_Y = TREE_TOP + 0.25
 
 const GREENS = ['#174f2e', '#1d6238', '#247342', '#2d8a4e'].map((c) => new Color(c))
 const UNDERSIDE = new Color('#0f3520')
@@ -237,7 +239,8 @@ export function Tree({ animate }: { animate: boolean }) {
   const glowPoints = useRef<Points>(null)
   const star = useRef<Object3D>(null)
   const halo = useRef<Sprite>(null)
-  const rays = useRef<Sprite>(null)
+  const glare = useRef<Sprite>(null)
+  const streak = useRef<Sprite>(null)
   const garland = useMemo(() => buildGarland(), [])
 
   useLayoutEffect(() => {
@@ -297,9 +300,16 @@ export function Tree({ animate }: { animate: boolean }) {
 
     if (star.current) star.current.rotation.y = t * 0.5
     if (halo.current) halo.current.scale.setScalar(1.9 + Math.sin(t * 1.3) * 0.15)
-    if (rays.current) {
-      rays.current.material.rotation = t * 0.12
-      rays.current.scale.setScalar(3.4 + Math.sin(t * 0.9) * 0.35)
+    // Il glare respira e ruota piano; la lama anamorfica resta orizzontale e pulsa sfasata.
+    const breath = Math.sin(t * 0.9)
+    if (glare.current) {
+      glare.current.material.rotation = t * 0.05
+      glare.current.scale.setScalar(4.6 + breath * 0.45)
+      glare.current.material.opacity = 0.85 + breath * 0.15
+    }
+    if (streak.current) {
+      streak.current.scale.set(6.5 + Math.sin(t * 0.7) * 0.8, 0.32, 1)
+      streak.current.material.opacity = 0.7 + Math.sin(t * 1.1 + 1) * 0.15
     }
   })
 
@@ -339,10 +349,11 @@ export function Tree({ animate }: { animate: boolean }) {
         <icosahedronGeometry args={[1, 1]} />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
+      {/* alone a croce, come attraverso un filtro a stella */}
       <points ref={glowPoints} geometry={glowGeometry}>
         <pointsMaterial
-          map={glowTexture()}
-          size={0.8}
+          map={glintTexture()}
+          size={0.75}
           sizeAttenuation
           vertexColors
           transparent
@@ -353,7 +364,7 @@ export function Tree({ animate }: { animate: boolean }) {
       </points>
 
       {/* stella */}
-      <group position={[0, TREE_TOP + 0.25, 0]}>
+      <group position={[0, STAR_Y, 0]}>
         <mesh ref={star} geometry={starGeometry}>
           <meshStandardMaterial
             color="#ffd04a"
@@ -364,15 +375,27 @@ export function Tree({ animate }: { animate: boolean }) {
             toneMapped={false}
           />
         </mesh>
-        <sprite ref={rays} scale={3.4}>
+        {/* glare: punte lunghe con l'iride in fondo, e la lama anamorfica orizzontale */}
+        <sprite ref={glare} scale={4.6}>
           <spriteMaterial
-            map={raysTexture()}
-            color="#ffd27a"
+            map={glareTexture()}
+            color="#ffe2a0"
             transparent
-            opacity={0.55}
             depthWrite={false}
             blending={AdditiveBlending}
             toneMapped={false}
+            fog={false}
+          />
+        </sprite>
+        <sprite ref={streak} scale={[6.5, 0.32, 1]}>
+          <spriteMaterial
+            map={streakTexture()}
+            color="#9cc4ff"
+            transparent
+            depthWrite={false}
+            blending={AdditiveBlending}
+            toneMapped={false}
+            fog={false}
           />
         </sprite>
         <sprite ref={halo} scale={1.9}>
