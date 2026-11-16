@@ -212,16 +212,18 @@ function LotteryCard({ room }: { room: RoomDetail }) {
               Una lotteria per stanza, con un premio speciale che non si trova da nessun'altra
               parte. Nasce chiusa: la vedi solo tu finché non la apri.
             </p>
-            <Button onClick={() => create.mutate()} disabled={create.isPending}>
-              Crea la lotteria
-            </Button>
+            <div className="d-grid d-sm-flex">
+              <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                Crea la lotteria
+              </Button>
+            </div>
           </>
         ) : data.status === 'draft' ? (
           <>
             <p className="text-body-secondary">
               È pronta ma ancora chiusa. Quando la apri, tutti possono prendere il biglietto.
             </p>
-            <div className="d-flex flex-wrap gap-2">
+            <div className="d-grid d-sm-flex gap-2">
               <Button onClick={() => open.mutate()} disabled={open.isPending}>
                 Apri ai partecipanti
               </Button>
@@ -236,7 +238,7 @@ function LotteryCard({ room }: { room: RoomDetail }) {
                 ? "Quando lanci l'estrazione parte un conto alla rovescia in diretta per chi ha la stanza aperta."
                 : `Per estrarre servono almeno ${MIN_TICKETS} biglietti.`}
             </p>
-            <div className="d-flex flex-wrap gap-2">
+            <div className="d-grid d-sm-flex gap-2">
               <Confirm
                 title="Estraiamo la lotteria?"
                 confirmLabel="Sì, via al conto alla rovescia"
