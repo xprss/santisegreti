@@ -322,10 +322,12 @@ body {
 
 // La scena dell'albero. Sul telefono riempie tutto lo schermo sotto l'header (alto
 // --ss-header-h, misurato in Layout); da tablet in su torna un riquadro 16:9.
+// svh e non dvh: dvh cambia mentre si scorre (la barra del browser compare e sparisce), la scena
+// cambiava altezza a metà snap e il canvas, ridimensionato, si svuotava per un attimo.
 .ss-scene {
   position: relative;
   width: 100%;
-  height: calc(100dvh - var(--ss-header-h, 0px));
+  height: calc(100svh - var(--ss-header-h, 0px));
   background: radial-gradient(ellipse at 50% 35%, #1d3a4f 0%, #0d1b2a 70%);
   overflow: hidden;
   touch-action: pan-y;
@@ -334,7 +336,7 @@ body {
   @include media-breakpoint-up(md) {
     height: auto;
     aspect-ratio: 16 / 9;
-    max-height: 72dvh;
+    max-height: 72svh;
     scroll-snap-align: none;
 
     // Il fondo della scena sfuma nel colore della pagina: nessuno stacco netto.
@@ -1419,7 +1421,7 @@ body {
 // La scena della pagina di accesso riempie lo schermo anche su tablet e desktop.
 .ss-scene--landing {
   @include media-breakpoint-up(md) {
-    height: calc(100dvh - var(--ss-header-h, 0px));
+    height: calc(100svh - var(--ss-header-h, 0px));
     aspect-ratio: auto;
     max-height: none;
 
