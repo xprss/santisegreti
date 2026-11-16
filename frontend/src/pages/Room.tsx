@@ -3,8 +3,9 @@ import { Badge, Card, CloseButton, Col, Container, Modal, Row } from 'react-boot
 import { Button } from '../components/Button'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../api/client'
-import { useMe, useMyAssignment, useRemoveParticipant, useRoom } from '../api/hooks'
-import type { Me, RoomDetail } from '../api/types'
+import { useLottery, useMe, useMyAssignment, useRemoveParticipant, useRoom } from '../api/hooks'
+import { useLotterySocket } from '../api/lotterySocket'
+import type { Lottery, Me, RoomDetail } from '../api/types'
 import { Confirm, ErrorAlert, Loading } from '../components/feedback'
 import { Gingerbread } from '../components/Gingerbread'
 import { ScrollHint } from '../components/ScrollHint'
@@ -12,6 +13,8 @@ import { useSceneSnap } from '../lib/useSceneSnap'
 import { ParticipantsFallback } from '../scene/ParticipantsFallback'
 import { canUseWebGL } from '../scene/webgl'
 import { daysUntil, formatEuro, parseDay, plural } from '../lib/format'
+import { LotteryCountdownOverlay } from '../lottery/LotteryCountdownOverlay'
+import { LotterySection } from '../lottery/LotterySection'
 
 const ChristmasScene = lazy(() => import('../scene/ChristmasScene'))
 
@@ -32,6 +35,9 @@ export function Room() {
   const room = useRoom(id)
   const me = useMe().data as Me
   const content = useRef<HTMLDivElement>(null)
+  const lottery = useLottery(id).data
+  // Collegamento live: lotteria, countdown e chi ha la stanza aperta adesso.
+  const online = useLotterySocket(id, me.id)
   useSceneSnap()
 
   if (room.isPending) return <Loading />
@@ -88,10 +94,14 @@ export function Room() {
             <DetailsCard room={data} />
           </Col>
           <Col xs={12}>
-            <ParticipantsCard room={data} me={me} />
+            <LotterySection room={data} me={me} lottery={lottery} />
+          </Col>
+          <Col xs={12}>
+            <ParticipantsCard room={data} me={me} lottery={lottery} online={online} />
           </Col>
         </Row>
       </Container>
+      <LotteryCountdownOverlay roomId={data.id} me={me} lottery={lottery} online={online} />
     </>
   )
 }
@@ -279,12 +289,23 @@ function DetailsCard({ room }: { room: RoomDetail }) {
 const TILTS = [-3, 2.5, -1.5, 3, -2.5, 1.5, -1, 2]
 
 /** Chi c'è nella stanza: una polaroid per omino, appese con lo scotch; un tocco apre il profilo. */
-function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
+function ParticipantsCard({
+  room,
+  me,
+  lottery,
+  online,
+}: {
+  room: RoomDetail
+  me: Me
+  lottery: Lottery | null | undefined
+  online: Set<string>
+}) {
   const leave = useRemoveParticipant(room.id)
   const navigate = useNavigate()
   const canLeave = !room.is_admin && room.status === 'open'
   const [openId, setOpenId] = useState<string | null>(null)
   const open = room.participants.find((p) => p.id === openId) ?? null
+  const holders = new Set(lottery?.ticket_holder_ids ?? [])
 
   return (
     <section aria-labelledby="people-title">
@@ -292,14 +313,22 @@ function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
         Chi c'è nella stanza: {plural(room.participants.length, 'persona', 'persone')}
       </h2>
       <div className="ss-polaroids">
-        {room.participants.map((person, i) => (
+        {room.participants.map((person, i) => {
+          const isOnline = online.has(person.id)
+          const hasTicket = holders.has(person.id)
+          const label = [
+            `Profilo di ${person.name}`,
+            isOnline && 'collegato adesso',
+            hasTicket && 'ha il biglietto della lotteria',
+          ]
+          return (
           <button
             key={person.id}
             type="button"
             className="ss-polaroid"
             style={{ '--tilt': `${TILTS[i % TILTS.length]}deg` } as CSSProperties}
             onClick={() => setOpenId(person.id)}
-            aria-label={`Profilo di ${person.name}`}
+            aria-label={label.filter(Boolean).join(', ')}
           >
             <span
               className="ss-polaroid-photo"
@@ -307,12 +336,19 @@ function ParticipantsCard({ room, me }: { room: RoomDetail; me: Me }) {
             >
               <Gingerbread color={person.color} accessory={person.accessory} size={52} />
               {person.id === room.admin_id && <span className="ss-polaroid-star">admin</span>}
+              {isOnline && <span className="ss-polaroid-online" title="Collegato adesso" />}
+              {hasTicket && (
+                <span className="ss-polaroid-ticket" title="Ha il biglietto della lotteria">
+                  <i className="bi bi-ticket-perforated-fill" aria-hidden />
+                </span>
+              )}
             </span>
             <span className="ss-polaroid-name">
               {person.id === me.id ? `${person.name} (tu)` : person.name}
             </span>
           </button>
-        ))}
+          )
+        })}
       </div>
 
       <Modal

@@ -4,6 +4,7 @@ import type {
   AppConfig,
   ExclusionGroup,
   Invite,
+  Lottery,
   Me,
   MyAssignment,
   RedeemResult,
@@ -18,6 +19,7 @@ export const keys = {
   rooms: ['rooms'] as const,
   room: (id: string) => ['rooms', id] as const,
   assignment: (id: string) => ['rooms', id, 'assignment'] as const,
+  lottery: (id: string) => ['rooms', id, 'lottery'] as const,
 }
 
 export function useConfig() {
@@ -199,4 +201,51 @@ export function useDraw(id: string) {
       client.invalidateQueries({ queryKey: keys.rooms, exact: true })
     },
   })
+}
+
+export function useLottery(id: string) {
+  return useQuery({
+    queryKey: keys.lottery(id),
+    queryFn: () => api<Lottery | null>(`/rooms/${id}/lottery`),
+  })
+}
+
+/** Le azioni sulla lotteria rispondono con lo stato nuovo (il WebSocket lo manda anche agli altri). */
+function useLotteryMutation<TInput = void>(
+  id: string,
+  request: (input: TInput) => Promise<Lottery | void>,
+) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: request,
+    onSuccess: (lottery) => {
+      client.setQueryData(keys.lottery(id), lottery ?? null)
+    },
+  })
+}
+
+export function useCreateLottery(id: string) {
+  return useLotteryMutation(id, () => api<Lottery>(`/rooms/${id}/lottery`, { method: 'POST' }))
+}
+
+export function useOpenLottery(id: string) {
+  return useLotteryMutation(id, () =>
+    api<Lottery>(`/rooms/${id}/lottery/open`, { method: 'POST' }),
+  )
+}
+
+export function useDeleteLottery(id: string) {
+  return useLotteryMutation(id, () => api<void>(`/rooms/${id}/lottery`, { method: 'DELETE' }))
+}
+
+export function useTakeTicket(id: string) {
+  return useLotteryMutation(id, () =>
+    api<Lottery>(`/rooms/${id}/lottery/tickets`, { method: 'POST' }),
+  )
+}
+
+export function useDrawLottery(id: string) {
+  return useLotteryMutation(id, () =>
+    api<Lottery>(`/rooms/${id}/lottery/draw`, { method: 'POST' }),
+  )
 }
