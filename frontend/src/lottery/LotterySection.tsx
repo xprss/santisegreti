@@ -13,10 +13,6 @@ interface LotterySectionProps {
   lottery: Lottery | null | undefined
 }
 
-function torn(count: number) {
-  return count === 1 ? '1 biglietto strappato' : `${count} biglietti strappati`
-}
-
 /** La lotteria della stanza, sopra le polaroid: invito, biglietto, poi il risultato. */
 export function LotterySection({ room, me, lottery }: LotterySectionProps) {
   const [tearing, setTearing] = useState(false)
@@ -49,20 +45,7 @@ export function LotterySection({ room, me, lottery }: LotterySectionProps) {
       {lottery.status === 'drawn' && lottery.winner ? (
         <LotteryResult lottery={lottery} me={me} />
       ) : ticket ? (
-        <>
-          <LotteryTicket
-            ref={ticketRef}
-            number={ticket.number}
-            fresh={fresh}
-            waiting={tearing}
-          />
-          <p className="ss-lottery-caption">
-            {torn(lottery.ticket_count)} ·{' '}
-            {lottery.status === 'countdown'
-              ? 'estrazione in corso!'
-              : "l'estrazione sarà in diretta, quando la lancia l'admin"}
-          </p>
-        </>
+        <LotteryTicket ref={ticketRef} number={ticket.number} fresh={fresh} waiting={tearing} />
       ) : lottery.status === 'open' ? (
         <div className="ss-pixel-box ss-lottery-invite">
           <i className="bi bi-gift-fill ss-lottery-invite-gift" aria-hidden />
