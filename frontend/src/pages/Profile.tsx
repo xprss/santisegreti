@@ -107,7 +107,12 @@ export function Profile() {
 
         <fieldset className="ss-sticker ss-sticker--green" style={{ '--tilt': '1deg' } as CSSProperties}>
           <legend className="ss-sticker-caption">un accessorio, se ti va</legend>
-          <AccessoryPicker value={accessory} color={color} onChange={setAccessory} />
+          <AccessoryPicker
+            value={accessory}
+            color={color}
+            onChange={setAccessory}
+            unlocked={me.unlocked_accessories ?? []}
+          />
         </fieldset>
 
         <ErrorAlert error={update.error} className="mb-0" />
